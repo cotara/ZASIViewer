@@ -20,7 +20,7 @@ Looker::~Looker()
 }
 //Устанавливает число number в LCD dataType(0-Основной диаметр, 1-Dx, 2-Dy) в отображалку под номером numDev
 void Looker::setData(double number, int dataType, int numDev){
-    if(numDev == 1){
+    if(numDev == numDev1){//Если пришли данные первого девайса
         switch (dataType){
             case 0:
               diamLooker1->setDataD(number); break;
@@ -30,7 +30,7 @@ void Looker::setData(double number, int dataType, int numDev){
               diamLooker1->setDataDY(number); break;
         }
     }
-    else if(numDev == 2){
+    else if(numDev == numDev2){//Если пришли данные второго девайса
         switch (dataType){
             case 0:
               diamLooker2->setDataD(number); break;
@@ -40,4 +40,12 @@ void Looker::setData(double number, int dataType, int numDev){
               diamLooker2->setDataDY(number); break;
         }
     }
+}
+
+void Looker::setNumDev1(int num){
+    numDev1 = num;
+}
+
+void Looker::setNumDev2(int num){
+    numDev2 = num;
 }

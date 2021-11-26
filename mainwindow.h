@@ -33,7 +33,10 @@ private:
     ModBusClient *m_modbusClient;
 private slots:
     void connectionChanged(int status,const QString &host);
-    void tcpConnectionFailed();
-    void tcpTextProcessing(int numDev, const QVector<short>& data);
+    void connectionFailed(int numDev,const QString &msg);
+    void modbusReqPrint(int numDev,const  QByteArray &reqeq);
+    void modbusDataProcessing(int numDev, const QVector<short>& data);
+    void clearConsole();
+
 };
 #endif // MAINWINDOW_H

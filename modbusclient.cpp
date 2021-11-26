@@ -8,16 +8,11 @@ enum ModbusConnection {
     Tcp
 };
 
-
 ModBusClient::ModBusClient(QObject *parent) : QObject(parent){
 
-    m_timer1 = new QTimer(this);
-    m_timer1->setInterval(1000);
-    connect(m_timer1,&QTimer::timeout,this,&ModBusClient::handlerTimer1);
-
-    m_timer2 = new QTimer(this);
-    m_timer2->setInterval(1000);
-    connect(m_timer2,&QTimer::timeout,this,&ModBusClient::handlerTimer2);
+    m_timer = new QTimer(this);
+    m_timer->setInterval(1000);
+    connect(m_timer,&QTimer::timeout,this,&ModBusClient::handlerTimer);
 
     onConnectTypeChanged(false);//Включаем по умолчанию COM
 }
@@ -31,10 +26,8 @@ ModBusClient::~ModBusClient()
         m_ModbusClient2->disconnectDevice();
     delete m_ModbusClient2;
 
-    delete m_timer1;
-    delete m_timer2;
+    delete m_timer;
 }
-
 
 //Изменен тип подключение COM-0/TCP-1
 void ModBusClient::onConnectTypeChanged(bool type_tcp){
@@ -54,7 +47,6 @@ void ModBusClient::onConnectTypeChanged(bool type_tcp){
     auto type = static_cast<ModbusConnection>(type_tcp);
     if (type == Serial){
         m_ModbusClient1 = new QModbusRtuSerialMaster(this);
-        m_ModbusClient2 = new QModbusRtuSerialMaster(this);
     }
     else if (type == Tcp){
         m_ModbusClient1 = new QModbusTcpClient(this);
@@ -63,24 +55,35 @@ void ModBusClient::onConnectTypeChanged(bool type_tcp){
 
     if (!m_ModbusClient1) {
         if (type == Serial)
-            emit errorOccured("Could not create Modbus master 1.");
+            emit errorOccured(1,"Could not create Modbus master 1.");
         else
-            emit errorOccured("Could not create Modbus client 1.");
+            emit errorOccured(1,"Could not create Modbus client 1.");
     }
     else{
         connect(m_ModbusClient1, &QModbusClient::stateChanged, this,[=](QModbusDevice::State state){ onModbusStateChanged(1,state);});
-        connect(m_ModbusClient1, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(m_ModbusClient1->errorString());});
+        connect(m_ModbusClient1, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(1, m_ModbusClient1->errorString());});
     }
-    if (!m_ModbusClient2) {
-        if (type == Serial)
-            emit errorOccured("Could not create Modbus master 2.");
-        else
-            emit errorOccured("Could not create Modbus client 2.");
+
+    if (!m_ModbusClient2 ) {
+        if(type == Tcp)    //т.к. для serial второй клиент никогда не будет создан
+            emit errorOccured(2,"Could not create Modbus client 2.");
     }
     else{
         connect(m_ModbusClient2, &QModbusClient::stateChanged, this, [=](QModbusDevice::State state){ onModbusStateChanged(2,state);});
-        connect(m_ModbusClient2, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(m_ModbusClient2->errorString());});
+        connect(m_ModbusClient2, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(2, m_ModbusClient2->errorString());});
     }
+}
+
+void ModBusClient::setServer1(int serverAdd){
+    m_server1 = serverAdd;
+}
+
+void ModBusClient::setServer2(int serverAdd){
+    m_server2 = serverAdd;
+}
+
+void ModBusClient::setDoubleMode(bool doubleMode){
+    m_doubleMode = doubleMode;
 }
 
 //Подключение
@@ -96,7 +99,7 @@ void ModBusClient::onConnect(int numDev, bool type, QString ipadd,int port, int 
 
     if (!m_ModbusClient)
         return;
-    QModbusDevice::State state = m_ModbusClient->state();
+    m_type = type;//Сохраняем тип текущего соединения
     if (m_ModbusClient->state() != QModbusDevice::ConnectedState) {
         if (type == Serial) {
                 m_ModbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter,ipadd);
@@ -118,8 +121,7 @@ void ModBusClient::onConnect(int numDev, bool type, QString ipadd,int port, int 
             m_server2 = server;
         }
 
-        QModbusDevice::State m_state = m_ModbusClient->state();
-        if ( m_state != QModbusDevice::ConnectedState) {
+        if ( m_ModbusClient->state() != QModbusDevice::ConnectedState) {
             m_ModbusClient->setTimeout(1000);
             m_ModbusClient->setNumberOfRetries(5);
             m_ModbusClient->connectDevice();
@@ -132,15 +134,11 @@ void ModBusClient::onConnect(int numDev, bool type, QString ipadd,int port, int 
 void ModBusClient::onModbusStateChanged(int numDev, int state)
 {
     QString m_host;
-    QTimer *m_timer;
-    if(numDev == 1){
+    if(numDev == 1)
         m_host = m_host1;
-        m_timer = m_timer1;
-    }
-    else if(numDev == 2){
+    else if(numDev == 2)
         m_host = m_host2;
-        m_timer = m_timer2;
-    }
+
     switch(state){
         case QModbusDevice::UnconnectedState:   //Отключено
             emit connectionStatus(0,m_host);
@@ -157,106 +155,83 @@ void ModBusClient::onModbusStateChanged(int numDev, int state)
     }
 }
 //Время для отправки запроса
-void ModBusClient::handlerTimer1(){
-    //Отправляем запрос на все регистры раз в секунду
+void ModBusClient::handlerTimer(){
+    //Запрос на первое устройство. Идентичен для serial и TCP
     if (!m_ModbusClient1)
         return;
-    if (auto *reply = m_ModbusClient1->sendReadRequest(readRequest(), m_server1)) {
-        if (!reply->isFinished())
-            connect(reply, &QModbusReply::finished, this, &ModBusClient::onReadReady1);
+    //Запрос на первое устройство
+    QModbusDataUnit m_unit = readRequest();
+    if (auto *reply1 = m_ModbusClient1->sendReadRequest(m_unit, m_server1)) {
+
+        if (!reply1->isFinished()){
+            connect(reply1, &QModbusReply::finished, this, &ModBusClient::onReadReady);
+            emit modbusRequestSent(reply1->serverAddress(),"");//Вывод в консоль
+        }
         else
-            delete reply; // broadcast replies return immediately
+            delete reply1; // broadcast replies return immediately
     }
     else
-        emit errorOccured("Read error: " + m_ModbusClient1->errorString());
+        emit errorOccured(reply1->serverAddress(), "Read error: " + m_ModbusClient1->errorString());
+
+    if(m_doubleMode){//Если включен режим с двумя устройствами, то отправляем на второе
+        if(m_type == Serial){
+             if (auto *reply2 = m_ModbusClient1->sendReadRequest(readRequest(), m_server2)) {
+                if (!reply2->isFinished()){
+                    connect(reply2, &QModbusReply::finished, this, &ModBusClient::onReadReady);
+                    emit modbusRequestSent(reply2->serverAddress(),"");//Вывод в консоль
+                }
+                else
+                    delete reply2; // broadcast replies return immediately
+            }
+            else
+                emit errorOccured(reply2->serverAddress(), "Read error: " + m_ModbusClient1->errorString());
+        }
+        else{//tcp
+            if(m_ModbusClient2->state() == QModbusDevice::ConnectedState){//Если второе устройство подключено
+                if (auto *reply2 = m_ModbusClient2->sendReadRequest(readRequest(), m_server2)) {
+                    if (!reply2->isFinished()){
+                        connect(reply2, &QModbusReply::finished, this, &ModBusClient::onReadReady);
+                        emit modbusRequestSent(reply2->serverAddress(),"");//Вывод в консоль
+                    }
+                    else
+                        delete reply2; // broadcast replies return immediately
+                }
+                else
+                    emit errorOccured(reply2->serverAddress(), "Read error: " + m_ModbusClient2->errorString());
+            }
+        }
+    }//режим с двумя устрйоствами
 
 }
-void ModBusClient::handlerTimer2(){
-    //Отправляем запрос на все регистры раз в секунду
-    if (!m_ModbusClient2)
-        return;
-    if (auto *reply = m_ModbusClient2->sendReadRequest(readRequest(), m_server2)) {
-        if (!reply->isFinished())
-            connect(reply, &QModbusReply::finished, this, &ModBusClient::onReadReady2);
-        else
-            delete reply; // broadcast replies return immediately
-    }
-    else
-        emit errorOccured("Read error: " + m_ModbusClient2->errorString());
-
-}
-
 
 //Пришел овтет
-void ModBusClient::onReadReady1()
+void ModBusClient::onReadReady()
 {
-    auto reply = qobject_cast<QModbusReply *>(sender());
+    auto reply = qobject_cast<QModbusReply *>(sender());//ответ
+
+    int servAdd = reply->serverAddress();               //Устройства откуда ответ
     if (!reply)
         return;
-
     if (reply->error() == QModbusDevice::NoError) {
         const QModbusDataUnit unit = reply->result();
-        modbusRegs1.clear();
-        for (int i = 0, total = int(unit.valueCount()); i < total; ++i) {
-            //const QString entry = tr("Address: %1, Value: %2").arg(unit.startAddress() + i).arg(QString::number(unit.value(i), unit.registerType() <= QModbusDataUnit::Coils ? 10 : 16));
-            modbusRegs1.append(unit.value(i));
-            //ui->readValue->addItem(entry);
-        }
-        emit modbusDataReceved(1,modbusRegs1);
+        modbusRegs.clear();
+        for (int i = 0, total = int(unit.valueCount()); i < total; ++i)
+            modbusRegs.append(unit.value(i));
+
+        emit modbusDataReceved(servAdd,modbusRegs);
     }
-    else if (reply->error() == QModbusDevice::ProtocolError) {
-        emit errorOccured("Read response error (1dev): " + reply->errorString());
-        /*statusBar()->showMessage(tr("Read response error: %1 (Mobus exception: 0x%2)").
-                                    arg(reply->errorString()).
-                                    arg(reply->rawResult().exceptionCode(), -1, 16), 5000);*/
-    }
-    else {
-        emit errorOccured("Read response error (1dev): " + reply->errorString());
-        /*statusBar()->showMessage(tr("Read response error: %1 (code: 0x%2)").
-                                    arg(reply->errorString()).
-                                    arg(reply->error(), -1, 16), 5000);*/
-    }
+    else
+         emit errorOccured(servAdd, "Read response error (" + QString::number(servAdd) + " DEV): "+ reply->errorString());
 
     reply->deleteLater();
 }
-//Пришел овтет
-void ModBusClient::onReadReady2()
-{
-    auto reply = qobject_cast<QModbusReply *>(sender());
-    if (!reply)
-        return;
 
-    if (reply->error() == QModbusDevice::NoError) {
-        const QModbusDataUnit unit = reply->result();
-        modbusRegs2.clear();
-        for (int i = 0, total = int(unit.valueCount()); i < total; ++i) {
-            //const QString entry = tr("Address: %1, Value: %2").arg(unit.startAddress() + i).arg(QString::number(unit.value(i), unit.registerType() <= QModbusDataUnit::Coils ? 10 : 16));
-            modbusRegs2.append(unit.value(i));
-            //ui->readValue->addItem(entry);
-        }
-        emit modbusDataReceved(2,modbusRegs2);
-    }
-    else if (reply->error() == QModbusDevice::ProtocolError) {
-        emit errorOccured("Read response error: (2dev)" + reply->errorString());
-        /*statusBar()->showMessage(tr("Read response error: %1 (Mobus exception: 0x%2)").
-                                    arg(reply->errorString()).
-                                    arg(reply->rawResult().exceptionCode(), -1, 16), 5000);*/
-    }
-    else {
-        emit errorOccured("Read response error: (2dev)" + reply->errorString());
-        /*statusBar()->showMessage(tr("Read response error: %1 (code: 0x%2)").
-                                    arg(reply->errorString()).
-                                    arg(reply->error(), -1, 16), 5000);*/
-    }
-
-    reply->deleteLater();
-}
 QModbusDataUnit ModBusClient::readRequest() const
 {
     const auto table = static_cast<QModbusDataUnit::RegisterType>(QModbusDataUnit::HoldingRegisters);
 
-    int startAddress = 16;
+    int startAddress = 0;
 
-    quint16 numberOfEntries = 22;
+    quint16 numberOfEntries = 10;
     return QModbusDataUnit(table, startAddress, numberOfEntries);
 }
