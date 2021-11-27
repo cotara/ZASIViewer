@@ -21,6 +21,7 @@ public:
     QString getIpAdd(int number);
     int getPort(int number);
     int getDevNum(int number);
+    int getDiam(int number);
 
 public slots:
     void connectionChanged(int,const QString);
@@ -43,6 +44,8 @@ signals:
     void doubleModeChanged(bool mode);
     void server1changed(int serverAdd);
     void server2changed(int serverAdd);
+    void diameter1changed(int diam);
+    void diameter2changed(int diam);
     void clearConsole();
 
 };

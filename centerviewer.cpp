@@ -1,10 +1,10 @@
 #include "centerviewer.h"
 
-centerViewer::centerViewer(QWidget *parent): QWidget(parent) {
+centerViewer::centerViewer(QWidget *parent, int scale): QWidget(parent) {
     setObjectName("centerviewer");
     layoutV = new QVBoxLayout;
     setLayout(layoutV);
-
+    m_scale = scale;
 }
 
 void centerViewer::setCoord(double x, double y)
@@ -20,6 +20,11 @@ void centerViewer::setRad(double x,double y)
     yRad=y;
 }
 
+void centerViewer::setScale(int scale)
+{
+    m_scale = scale;
+}
+
 
 void centerViewer::paintEvent(QPaintEvent *e) {
 
@@ -28,7 +33,7 @@ void centerViewer::paintEvent(QPaintEvent *e) {
   widgetCenter.setY(this->size().height()/2);
   QPainter qp(this);
   addCircle(&qp);
-  paintPosition(&qp,xRad,yRad);
+  paintPosition(&qp);
 }
 void centerViewer::addCircle(QPainter *qp)
 {
@@ -45,11 +50,13 @@ void centerViewer::addCircle(QPainter *qp)
     qp->drawLine(d1,d2);
     qp->drawLine(d3,d4);
 }
-void centerViewer::paintPosition(QPainter *qp,double xRad, double yRad)
-{
+void centerViewer::paintPosition(QPainter *qp)
+{//Размер круга зависист от m_scale
     qp->setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap));
     QBrush brush(Qt::red,Qt::SolidPattern);
     qp->setBrush(brush);
+    double mmToPixScale = widgetCenter.y()*2/m_scale;
+    QPointF center = static_cast<QPointF>(widgetCenter) + QPointF(xPos*mmToPixScale,yPos*mmToPixScale);
     if(xRad > 0 && yRad>0)
-        qp->drawEllipse(static_cast<QPointF>(widgetCenter), 5*xRad, 5*yRad);
+        qp->drawEllipse(center, xRad*mmToPixScale, xRad*mmToPixScale);
 }

@@ -21,7 +21,7 @@ public slots:
 signals:
     void connectionStatus(int status, const QString &host);
     void errorOccured(int numDev, const QString &msg);
-    void modbusDataReceved(int numDev, const QVector<short>& data);
+    void modbusDataReceved(int numDev, const QVector<unsigned short>& data);
     void modbusRequestSent(int numDev, const QByteArray &req);
 private:
         QModbusClient *m_ModbusClient=nullptr,*m_ModbusClient1=nullptr, *m_ModbusClient2=nullptr;
@@ -30,7 +30,7 @@ private:
         int m_server1=0,m_server2=0;
         bool m_type=false,m_doubleMode=false;
         QModbusDataUnit readRequest() const;
-        QVector<short> modbusRegs;
+        QVector<unsigned short> modbusRegs;
 private slots:
         void onModbusStateChanged(int numDev, int state);
         void handlerTimer();

@@ -35,7 +35,7 @@ private slots:
     void connectionChanged(int status,const QString &host);
     void connectionFailed(int numDev,const QString &msg);
     void modbusReqPrint(int numDev,const  QByteArray &reqeq);
-    void modbusDataProcessing(int numDev, const QVector<short>& data);
+    void modbusDataProcessing(int numDev, const QVector<unsigned short>& data);
     void clearConsole();
 
 };

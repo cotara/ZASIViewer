@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     m_connectionPanel = new ConnectionPanel(this);
     m_console = new Console(this);
     m_console->setMaximumHeight(300);
-    m_console->setMinimumHeight(200);
+    //m_console->setMinimumHeight(200);
     connect(m_connectionPanel,&ConnectionPanel::clearConsole,this,&MainWindow::clearConsole);
 
     m_looker = new Looker(this);
@@ -43,11 +43,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     connect(m_connectionPanel,&ConnectionPanel::server2changed,m_modbusClient,&ModBusClient::setServer2);
     connect(m_connectionPanel,&ConnectionPanel::server1changed,m_looker,&Looker::setNumDev1);
     connect(m_connectionPanel,&ConnectionPanel::server2changed,m_looker,&Looker::setNumDev2);
+    connect(m_connectionPanel,&ConnectionPanel::diameter1changed,m_looker,&Looker::setDiam1);
+    connect(m_connectionPanel,&ConnectionPanel::diameter2changed,m_looker,&Looker::setDiam2);
 
     m_modbusClient->setServer1(m_connectionPanel->getDevNum(1));//Инициализация лукера и момбаса
     m_modbusClient->setServer2(m_connectionPanel->getDevNum(2));
     m_looker->setNumDev1(m_connectionPanel->getDevNum(1));
     m_looker->setNumDev2(m_connectionPanel->getDevNum(2));
+    m_looker->setDiam1(m_connectionPanel->getDiam(1));
+    m_looker->setDiam2(m_connectionPanel->getDiam(2));
 }
 
 MainWindow::~MainWindow()
@@ -100,7 +104,7 @@ void MainWindow::modbusReqPrint(int numDev, const QByteArray &req){
 }
 
 //Обработчки данных, пришедших от устройства
-void MainWindow::modbusDataProcessing(int numDev, const QVector<short>& data){
+void MainWindow::modbusDataProcessing(int numDev, const QVector<unsigned short>& data){
     QString str = "REPLY FROM " +  QString::number(numDev) + " DEV: ";
 
     for(short i:data)
@@ -108,13 +112,15 @@ void MainWindow::modbusDataProcessing(int numDev, const QVector<short>& data){
 
     str+="\n";
     m_console->putData(str.toUtf8());
-    QVector<double> doubleData;
+
+    QVector<double> doubleData, tempData;
+
     if(data.size()!=0){
-        doubleData.append((data.at(1)+65536*data.at(0))/1000.0);
-        doubleData.append((data.at(3)+65536*data.at(2))/1000.0);
-        doubleData.append((data.at(5)+65536*data.at(4))/1000.0);
-        doubleData.append((data.at(7)+65536*data.at(6))/1000.0);
-        doubleData.append((data.at(9)+65536*data.at(8))/1000.0);
+        doubleData.append(static_cast<double>(data.at(1)+65536*data.at(0))/1000.0);
+        doubleData.append(static_cast<double>(data.at(3)+65536*data.at(2))/1000.0);
+        doubleData.append(static_cast<double>(data.at(5)+65536*data.at(4))/1000.0);
+        doubleData.append(static_cast<double>(60000-data.at(9)-65536*data.at(8))/1000.0);
+        doubleData.append(static_cast<double>(60000-data.at(11)-65536*data.at(10))/1000.0);
 
         m_looker->setData(doubleData,numDev);
     }

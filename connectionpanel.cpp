@@ -43,8 +43,15 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     connect(ui->deviceNumLine,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit server1changed(i);});
     connect(ui->deviceNumLine2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit server2changed(i);});
 
+    connect(ui->diamSpinBox1,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit diameter1changed(i);});
+    connect(ui->diamSpinBox2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit diameter2changed(i);});
+
     ui->deviceNumLine->setValue(1);
     ui->deviceNumLine2->setValue(2);
+
+    ui->diamSpinBox1->setValue(50);
+    ui->diamSpinBox2->setValue(50);
+
 
     connect(ui->clearButton,&QPushButton::clicked,this,&ConnectionPanel::clearConsole);
 }
@@ -77,6 +84,16 @@ int ConnectionPanel::getDevNum(int number){
         return ui->deviceNumLine->value();
     else if(number==2)
         return ui->deviceNumLine2->value();
+    else
+        return -1;
+}
+
+int ConnectionPanel::getDiam(int number)
+{
+    if(number==1)
+        return ui->diamSpinBox1->value();
+    else if(number==2)
+        return ui->diamSpinBox2->value();
     else
         return -1;
 }

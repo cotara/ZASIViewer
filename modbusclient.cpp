@@ -11,7 +11,7 @@ enum ModbusConnection {
 ModBusClient::ModBusClient(QObject *parent) : QObject(parent){
 
     m_timer = new QTimer(this);
-    m_timer->setInterval(1000);
+    m_timer->setInterval(500);
     connect(m_timer,&QTimer::timeout,this,&ModBusClient::handlerTimer);
 
     onConnectTypeChanged(false);//Включаем по умолчанию COM
@@ -122,8 +122,8 @@ void ModBusClient::onConnect(int numDev, bool type, QString ipadd,int port, int 
         }
 
         if ( m_ModbusClient->state() != QModbusDevice::ConnectedState) {
-            m_ModbusClient->setTimeout(1000);
-            m_ModbusClient->setNumberOfRetries(5);
+            m_ModbusClient->setTimeout(100);
+            m_ModbusClient->setNumberOfRetries(2);
             m_ModbusClient->connectDevice();
         }
     }
