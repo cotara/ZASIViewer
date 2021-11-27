@@ -230,8 +230,8 @@ QModbusDataUnit ModBusClient::readRequest() const
 {
     const auto table = static_cast<QModbusDataUnit::RegisterType>(QModbusDataUnit::HoldingRegisters);
 
-    int startAddress = 0;
+    int startAddress = 16;
 
-    quint16 numberOfEntries = 10;
+    quint16 numberOfEntries = 22;
     return QModbusDataUnit(table, startAddress, numberOfEntries);
 }

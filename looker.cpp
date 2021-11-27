@@ -19,26 +19,12 @@ Looker::~Looker()
     delete diamLooker2;
 }
 //Устанавливает число number в LCD dataType(0-Основной диаметр, 1-Dx, 2-Dy) в отображалку под номером numDev
-void Looker::setData(double number, int dataType, int numDev){
+void Looker::setData(const QVector<double>& data, int numDev){
     if(numDev == numDev1){//Если пришли данные первого девайса
-        switch (dataType){
-            case 0:
-              diamLooker1->setDataD(number); break;
-            case 1:
-              diamLooker1->setDataDX(number); break;
-            case 2:
-              diamLooker1->setDataDY(number); break;
-        }
+        diamLooker1->setData(data);
     }
     else if(numDev == numDev2){//Если пришли данные второго девайса
-        switch (dataType){
-            case 0:
-              diamLooker2->setDataD(number); break;
-            case 1:
-              diamLooker2->setDataDX(number); break;
-            case 2:
-              diamLooker2->setDataDY(number); break;
-        }
+        diamLooker2->setData(data);;
     }
 }
 

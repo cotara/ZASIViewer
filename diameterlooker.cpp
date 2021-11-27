@@ -5,28 +5,23 @@ diameterLooker::diameterLooker(QWidget *parent, int num) :  QGroupBox(parent), u
 {
     ui->setupUi(this);
     setTitle("Прибор №" + QString::number(num));
+    m_centerViewer = new centerViewer(this);
+    ui->VLayout->addWidget(m_centerViewer);
 }
 
 diameterLooker::~diameterLooker()
 {
     delete ui;
+    delete m_centerViewer;
 
 }
 
-void diameterLooker::setDataD(double data)
+void diameterLooker::setData(const QVector<double> &data)
 {
-    d=data;
-    ui->lcdNumber->display(d);
-}
-
-void diameterLooker::setDataDX(double data)
-{
-    dx=data;
-    ui->lcdNumber_2->display(dx);
-}
-
-void diameterLooker::setDataDY(double data)
-{
-    dy=data;
-    ui->lcdNumber_3->display(dy);
+    m_data = data;
+    ui->lcdNumber->display(0);
+    ui->lcdNumber_2->display(1);
+    ui->lcdNumber_3->display(2);
+    m_centerViewer->setCoord(m_data.at(3),m_data.at(4));
+    m_centerViewer->setRad(m_data.at(1),m_data.at(2));
 }

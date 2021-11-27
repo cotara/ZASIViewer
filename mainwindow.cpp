@@ -108,12 +108,16 @@ void MainWindow::modbusDataProcessing(int numDev, const QVector<short>& data){
 
     str+="\n";
     m_console->putData(str.toUtf8());
+    QVector<double> doubleData;
     if(data.size()!=0){
-        m_looker->setData(data.at(1)/1000.0,0,numDev);
-        m_looker->setData(data.at(3)/1000.0,1,numDev);
-        m_looker->setData(data.at(5)/1000.0,2,numDev);
-    }
+        doubleData.append((data.at(1)+65536*data.at(0))/1000.0);
+        doubleData.append((data.at(3)+65536*data.at(2))/1000.0);
+        doubleData.append((data.at(5)+65536*data.at(4))/1000.0);
+        doubleData.append((data.at(7)+65536*data.at(6))/1000.0);
+        doubleData.append((data.at(9)+65536*data.at(8))/1000.0);
 
+        m_looker->setData(doubleData,numDev);
+    }
 }
 
 void MainWindow::clearConsole(){

@@ -15,13 +15,13 @@ class diameterLooker : public QGroupBox
 public:
     explicit diameterLooker(QWidget *parent = nullptr, int num = 0);
     ~diameterLooker();
-    void setDataD(double data);
-    void setDataDX(double data);
-    void setDataDY(double data);
+    void setData(const QVector<double>& data);
 
 private:
     Ui::diameterLooker *ui;
-    double d=0,dx=0,dy=0;
+    QVector <double> m_data;
+    centerViewer *m_centerViewer;
+
 };
 
 #endif // DIAMETERLOOKER_H
