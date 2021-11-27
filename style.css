@@ -17,7 +17,7 @@ QTabWidget#BigLabel{
 }
 QToolBar {
     background-color:#E0EEFF;
-    spacing: 7px; /* spacing between items in the tool bar */
+    spacing: 10px; /* spacing between items in the tool bar */
 }
 QToolBar::separator {
     background-color:#5CA4FF ;
@@ -84,6 +84,19 @@ QSpinBox{
     padding-right:5px;
 }
 QSpinBox:disabled{
+    color: #969696;
+}
+QLineEdit{
+    font-family: SFUIText-Bold;
+    font-size:14px;
+    border-radius:4px;
+    border:1px solid #5CA4FF;
+    min-height:25px;
+    color: #003AA3;
+    padding-left:5px;
+    padding-right:5px;
+}
+QLineEdit:disabled{
     color: #969696;
 }
 QDoubleSpinBox{

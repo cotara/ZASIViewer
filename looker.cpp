@@ -10,6 +10,7 @@ Looker::Looker(QWidget *parent) :
     diamLooker2 = new diameterLooker(this, 2,diam2);
     ui->HLayout->addWidget(diamLooker1);
     ui->HLayout->addWidget(diamLooker2);
+    diamLooker2->setVisible(false);
 }
 
 Looker::~Looker()
@@ -46,4 +47,8 @@ void Looker::setDiam2(int diam)
 {
     diam2=diam;
     diamLooker2->setDiam(diam2);
+}
+
+void Looker::enableSecondLooker(bool state){
+    diamLooker2->setVisible(state);
 }

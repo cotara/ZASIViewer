@@ -10,33 +10,33 @@ StatusBar::StatusBar(QStatusBar *statusBar)
     : m_statusBar(statusBar) {
 
 
-    dataReadyLabel = new QLabel("Error Status", statusBar);
-    dataReadyLabel->setStyleSheet(red);
+    //dataReadyLabel = new QLabel("Error Status", statusBar);
+    //dataReadyLabel->setStyleSheet(red);
     mcuLabel = new QLabel("Off-line", statusBar);
     mcuLabel->setStyleSheet(red);
     infoLabel = new QLabel("", statusBar);
-    downloadBar = new QProgressBar();
-    reSent = new QLabel("Переотправлено: ", statusBar);
+    //downloadBar = new QProgressBar();
+    //reSent = new QLabel("Переотправлено: ", statusBar);
 
-    statusBar->addPermanentWidget(reSent);
-    downloadBar->setMinimumWidth(100);
-    downloadBar->setMinimumHeight(2);
-    statusBar->addPermanentWidget(downloadBar);
+    //statusBar->addPermanentWidget(reSent);
+    //downloadBar->setMinimumWidth(100);
+    //downloadBar->setMinimumHeight(2);
+    //statusBar->addPermanentWidget(downloadBar);
 
-    statusBar->addPermanentWidget(dataReadyLabel);
-    dataReadyLabel->setMinimumWidth(50);
-    dataReadyLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-    dataReadyLabel->setAlignment(Qt::AlignHCenter);
+    //statusBar->addPermanentWidget(dataReadyLabel);
+    //dataReadyLabel->setMinimumWidth(50);
+    //dataReadyLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    //dataReadyLabel->setAlignment(Qt::AlignHCenter);
 
     statusBar->addPermanentWidget(mcuLabel);
     mcuLabel->setMinimumWidth(50);
     mcuLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
     mcuLabel->setAlignment(Qt::AlignHCenter);
 
-    statusBar->addPermanentWidget(infoLabel);
-    infoLabel->setMinimumWidth(20);
-    infoLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-    infoLabel->setAlignment(Qt::AlignHCenter);
+    //statusBar->addPermanentWidget(infoLabel);
+    //infoLabel->setMinimumWidth(20);
+    //infoLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    //infoLabel->setAlignment(Qt::AlignHCenter);
 }
 
 void StatusBar::setStatus(bool online) {

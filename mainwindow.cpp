@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     m_connectionPanel = new ConnectionPanel(this);
     m_console = new Console(this);
     m_console->setMaximumHeight(300);
+    ui->actionconsoleOn->setChecked(false);
     //m_console->setMinimumHeight(200);
     connect(m_connectionPanel,&ConnectionPanel::clearConsole,this,&MainWindow::clearConsole);
 
@@ -39,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     connect(m_connectionPanel,&ConnectionPanel::connectionTypeChanged,m_modbusClient,&ModBusClient::onConnectTypeChanged);//Изменился тип подключения
 
     connect(m_connectionPanel,&ConnectionPanel::doubleModeChanged,m_modbusClient,&ModBusClient::setDoubleMode);
+    connect(m_connectionPanel,&ConnectionPanel::doubleModeChanged,m_looker,&Looker::enableSecondLooker);
     connect(m_connectionPanel,&ConnectionPanel::server1changed,m_modbusClient,&ModBusClient::setServer1);
     connect(m_connectionPanel,&ConnectionPanel::server2changed,m_modbusClient,&ModBusClient::setServer2);
     connect(m_connectionPanel,&ConnectionPanel::server1changed,m_looker,&Looker::setNumDev1);
@@ -52,6 +54,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     m_looker->setNumDev2(m_connectionPanel->getDevNum(2));
     m_looker->setDiam1(m_connectionPanel->getDiam(1));
     m_looker->setDiam2(m_connectionPanel->getDiam(2));
+
+    addToolBar(Qt::RightToolBarArea, ui->toolBar);//Перемещаем направо
+    connect(m_connectionPanel,&ConnectionPanel::doubleButtonBlock,ui->actiondoubleMode,&QAction::setEnabled);
+
 }
 
 MainWindow::~MainWindow()
@@ -70,7 +76,8 @@ void MainWindow::connectionChanged(int status,const QString &host){
     switch(status){
         case 0:   //Отключено
             str = "Отключено от " + host + "\n";
-            m_statusBar->setMessageBar(str);
+            m_statusBar->setMessageBar(str);            
+            m_statusBar->setStatus(false);
             m_console->putData(str.toUtf8());
             break;
         case 1:    //Подключение
@@ -80,7 +87,8 @@ void MainWindow::connectionChanged(int status,const QString &host){
         break;
         case 2:     //Подключено
             str = "Подключено к " + host + "\n";
-            m_statusBar->setMessageBar(str);
+            m_statusBar->setMessageBar(str);            
+            m_statusBar->setStatus(true);
             m_console->putData(str.toUtf8());
             break;
         case 3:       //Отключение
@@ -128,5 +136,26 @@ void MainWindow::modbusDataProcessing(int numDev, const QVector<unsigned short>&
 
 void MainWindow::clearConsole(){
     m_console->clear();
+}
+
+
+
+void MainWindow::on_actionconsoleOn_toggled(bool arg1){
+    m_console->setVisible(arg1);
+}
+
+
+void MainWindow::on_actionsettingsOn_toggled(bool arg1){
+    m_connectionPanel->setVisible(arg1);
+}
+
+
+void MainWindow::on_actiontcp_com_toggled(bool arg1){
+    m_connectionPanel->setInterface(arg1);
+}
+
+
+void MainWindow::on_actiondoubleMode_toggled(bool arg1){
+    m_connectionPanel->setDoubleMode(arg1);
 }
 

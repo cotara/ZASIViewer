@@ -21,6 +21,7 @@ public slots:
     void setNumDev2(int num);
     void setDiam1(int diam);
     void setDiam2(int diam);
+    void enableSecondLooker(bool state);
 private:
     Ui::Looker *ui;
     diameterLooker *diamLooker1,*diamLooker2;

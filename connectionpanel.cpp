@@ -11,10 +11,9 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     setTitle("Настройки подключения");
     setObjectName("historysettings");
     ui->setupUi(this);
-    ui->m_switch->setStyleSheet("QPushButton{background: transparent;}");//Прозрачная кнопка
 
 
-    on_m_switch_clicked(false);//С ком-портом
+    interfaceSwitch(false);//С ком-портом
     //IP
     QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
     QRegExp ipRegex ("^" + ipRange + "\\." + ipRange + "\\." + ipRange + "\\." + ipRange + "$");
@@ -123,8 +122,6 @@ void ConnectionPanel::connectionChanged(int state,const QString)
 }
 
 
-
-
 //Выбор ком-порта
 void ConnectionPanel::on_portsBox_currentIndexChanged(int i){
 
@@ -160,19 +157,19 @@ void ConnectionPanel::on_updAvblPortsButt_clicked(){
 
 //ПОДКЛЮЧИТЬСЯ!
 void ConnectionPanel::on_connectButton_clicked(){
-    if(!ui->m_switch->isChecked())//Выбран режим компорта
+    if(!m_interface)//Выбран режим компорта
        emit connectionPushed(1, false,ui->portsBox->currentText(),ui->spdBox->currentText().toInt(),ui->deviceNumLine->text().toInt());
 
     else{//Выбран режим TCP|IP
         emit connectionPushed(1, true,getIpAdd(1),getPort(1),ui->deviceNumLine->text().toInt());
-        if(ui->oneTwoCheck->isChecked())
+        if(m_doubleMode)
             emit connectionPushed(2, true,getIpAdd(2),getPort(2),ui->deviceNumLine2->text().toInt());
     }
 }
 
 
 //Переключение режима TCP - RS485
-void ConnectionPanel::on_m_switch_clicked(bool checked){
+void ConnectionPanel::interfaceSwitch(bool checked){
 
         ui->IPlabel->setVisible(checked);
         ui->IPlabel2->setVisible(checked);
@@ -192,35 +189,26 @@ void ConnectionPanel::on_m_switch_clicked(bool checked){
 
 
         emit connectionTypeChanged(checked);
-        on_oneTwoCheck_stateChanged(ui->oneTwoCheck->checkState());
+        oneTwoChange(m_doubleMode);
 
 }
 //Переключение режимов 1-2 устройства
-void ConnectionPanel::on_oneTwoCheck_stateChanged(int arg1){
-    if(!ui->m_switch->isChecked()){
-        ui->Portslabel->setVisible(true);
-        ui->portsBox->setVisible(true);
-        ui->updAvblPortsButt->setVisible(true);
-        ui->dscrLabel->setVisible(true);
-        ui->SpdLabel->setVisible(true);
-        ui->spdBox->setVisible(true);
-    }
-    else{
-        ui->IPlabel->setVisible(true);
+void ConnectionPanel::oneTwoChange(int arg1){
+    if(m_interface){//Если текущий режим - tcp
         ui->IPlabel2->setVisible(arg1);
-        ui->ipAdd->setVisible(true);
         ui->ipAdd2->setVisible(arg1);
-        ui->portLabel->setVisible(true);
         ui->portLabel2->setVisible(arg1);
-        ui->port->setVisible(true);
         ui->port2->setVisible(arg1);
     }
+
     ui->deviceNumLine2->setVisible(arg1);
+    ui->diamSpinBox2->setVisible(arg1);
+    ui->ldm2_label->setVisible(arg1);
     emit doubleModeChanged(arg1);//Засылааем инфу момбас классу
 }
 
 void ConnectionPanel::elementsDisable(bool state){
-    ui->oneTwoCheck->setEnabled(state);
+    emit doubleButtonBlock(state);
     ui->portsBox->setEnabled(state);
     ui->updAvblPortsButt->setEnabled(state);
     ui->spdBox->setEnabled(state);
@@ -230,6 +218,7 @@ void ConnectionPanel::elementsDisable(bool state){
     ui->ipAdd2->setEnabled(state);
     ui->port->setEnabled(state);
     ui->port2->setEnabled(state);
+
 
 }
 

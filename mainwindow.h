@@ -38,5 +38,9 @@ private slots:
     void modbusDataProcessing(int numDev, const QVector<unsigned short>& data);
     void clearConsole();
 
+    void on_actionconsoleOn_toggled(bool arg1);
+    void on_actionsettingsOn_toggled(bool arg1);
+    void on_actiontcp_com_toggled(bool arg1);
+    void on_actiondoubleMode_toggled(bool arg1);
 };
 #endif // MAINWINDOW_H
