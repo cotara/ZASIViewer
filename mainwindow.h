@@ -32,7 +32,7 @@ private:
     StatusBar *m_statusBar;
     ModBusClient *m_modbusClient;
 private slots:
-    void connectionChanged(int status,const QString &host);
+    void connectionChanged(int numDev, int status,const QString &host);
     void connectionFailed(int numDev,const QString &msg);
     void modbusReqPrint(int numDev,const  QByteArray &reqeq);
     void modbusDataProcessing(int numDev, const QVector<unsigned short>& data);

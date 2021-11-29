@@ -55,22 +55,22 @@ void ModBusClient::onConnectTypeChanged(bool type_tcp){
 
     if (!m_ModbusClient1) {
         if (type == Serial)
-            emit errorOccured(1,"Could not create Modbus master 1.");
+            emit errorOccured(m_server1,"Could not create Modbus master 1.");
         else
-            emit errorOccured(1,"Could not create Modbus client 1.");
+            emit errorOccured(m_server1,"Could not create Modbus client 1.");
     }
     else{
-        connect(m_ModbusClient1, &QModbusClient::stateChanged, this,[=](QModbusDevice::State state){ onModbusStateChanged(1,state);});
-        connect(m_ModbusClient1, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(1, m_ModbusClient1->errorString());});
+        connect(m_ModbusClient1, &QModbusClient::stateChanged, this,[=](QModbusDevice::State state){ onModbusStateChanged(1,m_server1,state);});
+        connect(m_ModbusClient1, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(m_server1, m_ModbusClient1->errorString());});
     }
 
     if (!m_ModbusClient2 ) {
         if(type == Tcp)    //т.к. для serial второй клиент никогда не будет создан
-            emit errorOccured(2,"Could not create Modbus client 2.");
+            emit errorOccured(m_server2,"Could not create Modbus client 2.");
     }
     else{
-        connect(m_ModbusClient2, &QModbusClient::stateChanged, this, [=](QModbusDevice::State state){ onModbusStateChanged(2,state);});
-        connect(m_ModbusClient2, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(2, m_ModbusClient2->errorString());});
+        connect(m_ModbusClient2, &QModbusClient::stateChanged, this, [=](QModbusDevice::State state){ onModbusStateChanged(1,m_server2,state);});
+        connect(m_ModbusClient2, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(m_server2, m_ModbusClient2->errorString());});
     }
 }
 
@@ -89,6 +89,7 @@ void ModBusClient::setDoubleMode(bool doubleMode){
 //Подключение
 //ipadd - адрес в случае с tcp или имя COM-порта в случае с serial
 //port - порт в случае с tcp или скорость в случае с serial
+//numDev - номер деваяйса по порядку - 1 или 2.
 void ModBusClient::onConnect(int numDev, bool type, QString ipadd,int port, int server){
     if(numDev == 1){
         m_ModbusClient = m_ModbusClient1;
@@ -131,7 +132,9 @@ void ModBusClient::onConnect(int numDev, bool type, QString ipadd,int port, int 
         m_ModbusClient->disconnectDevice();
 }
 //Состояние изменилось
-void ModBusClient::onModbusStateChanged(int numDev, int state)
+//numDev - номер устройства 1 или 2
+//server - адрес устройства модбас
+void ModBusClient::onModbusStateChanged(int numDev,int server, int state)
 {
     QString m_host;
     if(numDev == 1)
@@ -141,17 +144,17 @@ void ModBusClient::onModbusStateChanged(int numDev, int state)
 
     switch(state){
         case QModbusDevice::UnconnectedState:   //Отключено
-            emit connectionStatus(0,m_host);
+            emit connectionStatus(server,0,m_host);
             m_timer->stop();
             break;
         case QModbusDevice::ConnectingState:    //Подключение
-            emit connectionStatus(1,m_host);break;
+            emit connectionStatus(server,1,m_host);break;
         case QModbusDevice::ConnectedState:     //Подключено
-            emit connectionStatus(2,m_host);
+            emit connectionStatus(server,2,m_host);
             m_timer->start();
             break;
         case QModbusDevice::ClosingState:       //Отключение
-            emit connectionStatus(3,m_host);break;
+            emit connectionStatus(server,3,m_host);break;
     }
 }
 //Время для отправки запроса

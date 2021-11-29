@@ -97,7 +97,7 @@ int ConnectionPanel::getDiam(int number)
         return -1;
 }
 
-void ConnectionPanel::connectionChanged(int state,const QString)
+void ConnectionPanel::connectionChanged(int , int state,const QString)
 {
     switch(state){
         case 0:   //Отключено

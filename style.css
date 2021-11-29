@@ -36,7 +36,9 @@ QLabel#BigLabel{
     font-family: SFUIText-Bold;
     font-size: 14px;
 }
-
+QLabel:disabled{
+    color: #969696;
+}
 QPushButton{
     background: white;
     color: #003AA3;
@@ -133,7 +135,10 @@ QGroupBox::title {
     subcontrol-position: top center; /* position at the top center */
     color: #003AA3;
 }
-
+QGroupBox:disabled{
+    color: #969696;
+    background: #F0F0F0;
+}
 QSplitter::handle{
     width: 2px;
     height: 2px;
@@ -157,4 +162,11 @@ QProgressBar::chunk {
     background-color: #B3D5FF;
     width: 10px;
     margin: 0.5px;
+}
+QLCDNumber:disabled{
+    color: #B3B3B3;
+}
+QLineEdit:disabled{
+     background: #F0F0F0;
+     border-color: #B3B3B3;
 }

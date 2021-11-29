@@ -38,9 +38,9 @@ void centerViewer::paintEvent(QPaintEvent *e) {
 void centerViewer::addCircle(QPainter *qp)
 {
 
-    qp->setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::FlatCap));
-
-    qp->drawEllipse(widgetCenter, widgetCenter.y(), widgetCenter.y());
+    qp->setPen(QPen(Qt::black, 3, Qt::SolidLine, Qt::FlatCap));
+    int minDimention = qMin(widgetCenter.x(),widgetCenter.y());
+    qp->drawEllipse(widgetCenter, minDimention, minDimention);
     //Рисуем перекрестие
     QPoint d1(widgetCenter.x(),widgetCenter.y()+0.1*widgetCenter.y()),
            d2(widgetCenter.x(),widgetCenter.y()-0.1*widgetCenter.y()),

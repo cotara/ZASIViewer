@@ -25,7 +25,7 @@ public:
     void setInterface(bool type){m_interface = type;interfaceSwitch(m_interface);}
     void setDoubleMode(bool type){m_doubleMode = type;oneTwoChange(m_doubleMode);}
 public slots:
-    void connectionChanged(int,const QString);
+    void connectionChanged(int, int,const QString);
 
 private slots:
     void interfaceSwitch(bool checked);

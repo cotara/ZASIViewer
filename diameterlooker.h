@@ -22,6 +22,7 @@ private:
     QVector <double> m_data;
     centerViewer *m_centerViewer;
     int m_diam;//Диаметр прибора
+    void setError(int error);
 
 };
 

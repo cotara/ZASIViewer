@@ -11,6 +11,8 @@ Looker::Looker(QWidget *parent) :
     ui->HLayout->addWidget(diamLooker1);
     ui->HLayout->addWidget(diamLooker2);
     diamLooker2->setVisible(false);
+    diamLooker1->setEnabled(false);
+    diamLooker2->setEnabled(false);
 }
 
 Looker::~Looker()
@@ -26,6 +28,16 @@ void Looker::setData(const QVector<double>& data, int numDev){
     }
     else if(numDev == numDev2){//Если пришли данные второго девайса
         diamLooker2->setData(data);;
+    }
+}
+
+void Looker::setEnabled(int numDev, bool en)
+{
+    if(numDev == numDev1){
+        diamLooker1->setEnabled(en);
+    }
+    else if(numDev == numDev2){
+        diamLooker2->setEnabled(en);
     }
 }
 

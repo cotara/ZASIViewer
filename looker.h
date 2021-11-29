@@ -16,6 +16,7 @@ public:
     explicit Looker(QWidget *parent = nullptr);
     ~Looker();
     void setData(const QVector <double>& data, int numDev);
+    void setEnabled(int numDev, bool en);
 public slots:
     void setNumDev1(int num);
     void setNumDev2(int num);

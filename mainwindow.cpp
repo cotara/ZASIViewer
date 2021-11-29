@@ -71,7 +71,7 @@ MainWindow::~MainWindow()
     delete m_console;
 }
 
-void MainWindow::connectionChanged(int status,const QString &host){
+void MainWindow::connectionChanged(int server, int status,const QString &host){
     QString str;
     switch(status){
         case 0:   //Отключено
@@ -79,6 +79,7 @@ void MainWindow::connectionChanged(int status,const QString &host){
             m_statusBar->setMessageBar(str);            
             m_statusBar->setStatus(false);
             m_console->putData(str.toUtf8());
+            m_looker->setEnabled(server,false);
             break;
         case 1:    //Подключение
            str = "Подключение к " + host + "\n";
@@ -104,6 +105,7 @@ void MainWindow::connectionFailed(int numDev,const QString &msg){
     str = "Устройство c адресом " + QString::number(numDev) + " отключено. " + msg + "\n";
     m_statusBar->setMessageBar(str);
     m_console->putData(str.toUtf8());
+    m_looker->setEnabled(numDev,false);
 }
 
 void MainWindow::modbusReqPrint(int numDev, const QByteArray &req){
@@ -124,13 +126,17 @@ void MainWindow::modbusDataProcessing(int numDev, const QVector<unsigned short>&
     QVector<double> doubleData, tempData;
 
     if(data.size()!=0){
+        m_looker->setEnabled(numDev,true);
         doubleData.append(static_cast<double>(data.at(1)+65536*data.at(0))/1000.0);
         doubleData.append(static_cast<double>(data.at(3)+65536*data.at(2))/1000.0);
         doubleData.append(static_cast<double>(data.at(5)+65536*data.at(4))/1000.0);
         doubleData.append(static_cast<double>(60000-data.at(9)-65536*data.at(8))/1000.0);
         doubleData.append(static_cast<double>(60000-data.at(11)-65536*data.at(10))/1000.0);
-
+        doubleData.append(static_cast<double>(60000-data.at(13)-65536*data.at(12))/1000.0);
         m_looker->setData(doubleData,numDev);
+    }
+    else{
+        m_looker->setEnabled(numDev,false);
     }
 }
 
