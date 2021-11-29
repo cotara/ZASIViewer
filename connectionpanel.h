@@ -20,7 +20,7 @@ public:
     ~ConnectionPanel();
     QString getIpAdd(int number);
     int getPort(int number);
-    int getDevNum(int number);
+    int getServer(int number);
     int getDiam(int number);
     void setInterface(bool type){m_interface = type;interfaceSwitch(m_interface);}
     void setDoubleMode(bool type){m_doubleMode = type;oneTwoChange(m_doubleMode);}

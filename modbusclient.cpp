@@ -3,7 +3,7 @@
 #include <QModbusRtuSerialMaster>
 #include <QSerialPort>
 
-enum ModbusConnection {
+enum ConnectionType {
     Serial,
     Tcp
 };
@@ -14,7 +14,7 @@ ModBusClient::ModBusClient(QObject *parent) : QObject(parent){
     m_timer->setInterval(500);
     connect(m_timer,&QTimer::timeout,this,&ModBusClient::handlerTimer);
 
-    onConnectTypeChanged(false);//Включаем по умолчанию COM
+    onConnectTypeChanged(Serial);//Включаем по умолчанию COM
 }
 
 ModBusClient::~ModBusClient()
@@ -29,7 +29,7 @@ ModBusClient::~ModBusClient()
     delete m_timer;
 }
 
-//Изменен тип подключение COM-0/TCP-1
+//Изменен тип подключениея COM-0/TCP-1
 void ModBusClient::onConnectTypeChanged(bool type_tcp){
     if (m_ModbusClient1) {
         m_ModbusClient1->disconnectDevice();
@@ -44,7 +44,7 @@ void ModBusClient::onConnectTypeChanged(bool type_tcp){
 
     m_ModbusClient = nullptr;
 
-    auto type = static_cast<ModbusConnection>(type_tcp);
+    auto type = static_cast<ConnectionType>(type_tcp);
     if (type == Serial){
         m_ModbusClient1 = new QModbusRtuSerialMaster(this);
     }

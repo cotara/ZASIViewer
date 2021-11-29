@@ -32,31 +32,28 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     m_modbusClient = new ModBusClient(this);
 
     connect(m_connectionPanel,&ConnectionPanel::connectionPushed,m_modbusClient,&ModBusClient::onConnect);//Когда нажата кнопка пробуем подл/откл
-    connect(m_modbusClient,&ModBusClient::connectionStatus, m_connectionPanel,&ConnectionPanel::connectionChanged);//Когда подл/откл меняем кнопку
-    connect(m_modbusClient,&ModBusClient::connectionStatus, this,&MainWindow::connectionChanged);               //Когда подл/откл выводим в бар
-    connect(m_modbusClient,&ModBusClient::errorOccured, this,&MainWindow::connectionFailed);               //Сообщение об ошибке
-    connect(m_modbusClient,&ModBusClient::modbusRequestSent,this,&MainWindow::modbusReqPrint);              //Печатаем запрос
-    connect(m_modbusClient,&ModBusClient::modbusDataReceved,this,&MainWindow::modbusDataProcessing);                   //Пришли данные по modbus
     connect(m_connectionPanel,&ConnectionPanel::connectionTypeChanged,m_modbusClient,&ModBusClient::onConnectTypeChanged);//Изменился тип подключения
-
-    connect(m_connectionPanel,&ConnectionPanel::doubleModeChanged,m_modbusClient,&ModBusClient::setDoubleMode);
-    connect(m_connectionPanel,&ConnectionPanel::doubleModeChanged,m_looker,&Looker::enableSecondLooker);
-    connect(m_connectionPanel,&ConnectionPanel::server1changed,m_modbusClient,&ModBusClient::setServer1);
+    connect(m_connectionPanel,&ConnectionPanel::server1changed,m_modbusClient,&ModBusClient::setServer1);//Изменился сервер
     connect(m_connectionPanel,&ConnectionPanel::server2changed,m_modbusClient,&ModBusClient::setServer2);
-    connect(m_connectionPanel,&ConnectionPanel::server1changed,m_looker,&Looker::setNumDev1);
+    connect(m_connectionPanel,&ConnectionPanel::server1changed,m_looker,&Looker::setNumDev1);//Изменился сервер
     connect(m_connectionPanel,&ConnectionPanel::server2changed,m_looker,&Looker::setNumDev2);
-    connect(m_connectionPanel,&ConnectionPanel::diameter1changed,m_looker,&Looker::setDiam1);
+    connect(m_connectionPanel,&ConnectionPanel::diameter1changed,m_looker,&Looker::setDiam1);//Изменился диаметр (модель
     connect(m_connectionPanel,&ConnectionPanel::diameter2changed,m_looker,&Looker::setDiam2);
 
-    m_modbusClient->setServer1(m_connectionPanel->getDevNum(1));//Инициализация лукера и момбаса
-    m_modbusClient->setServer2(m_connectionPanel->getDevNum(2));
-    m_looker->setNumDev1(m_connectionPanel->getDevNum(1));
-    m_looker->setNumDev2(m_connectionPanel->getDevNum(2));
+    connect(m_modbusClient,&ModBusClient::connectionStatus, m_connectionPanel,&ConnectionPanel::connectionChanged);//Когда подл/откл меняем кнопку
+    connect(m_modbusClient,&ModBusClient::connectionStatus, this,&MainWindow::connectionChanged);                  //Когда подл/откл выводим в бар
+    connect(m_modbusClient,&ModBusClient::errorOccured, this,&MainWindow::connectionFailed);                       //Сообщение об ошибке
+    connect(m_modbusClient,&ModBusClient::modbusRequestSent,this,&MainWindow::modbusReqPrint);                     //Печатаем запрос
+    connect(m_modbusClient,&ModBusClient::modbusDataReceved,this,&MainWindow::modbusDataProcessing);               //Пришли данные по modbus
+
+    m_modbusClient->setServer1(m_connectionPanel->getServer(1));//Инициализация лукера и момбаса
+    m_modbusClient->setServer2(m_connectionPanel->getServer(2));
+    m_looker->setNumDev1(m_connectionPanel->getServer(1));
+    m_looker->setNumDev2(m_connectionPanel->getServer(2));
     m_looker->setDiam1(m_connectionPanel->getDiam(1));
     m_looker->setDiam2(m_connectionPanel->getDiam(2));
 
-    addToolBar(Qt::RightToolBarArea, ui->toolBar);//Перемещаем направо
-    connect(m_connectionPanel,&ConnectionPanel::doubleButtonBlock,ui->actiondoubleMode,&QAction::setEnabled);
+    addToolBar(Qt::RightToolBarArea, ui->toolBar);//Перемещаем тулбарнаправо
 
 }
 
@@ -80,22 +77,26 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
             m_statusBar->setStatus(false);
             m_console->putData(str.toUtf8());
             m_looker->setEnabled(server,false);
+            ui->actiondoubleMode->setEnabled(true);
             break;
         case 1:    //Подключение
            str = "Подключение к " + host + "\n";
            m_statusBar->setMessageBar(str);
            m_console->putData(str.toUtf8());
+           ui->actiondoubleMode->setEnabled(false);
         break;
         case 2:     //Подключено
             str = "Подключено к " + host + "\n";
             m_statusBar->setMessageBar(str);            
             m_statusBar->setStatus(true);
             m_console->putData(str.toUtf8());
+            ui->actiondoubleMode->setEnabled(false);
             break;
         case 3:       //Отключение
             str = "Отключение от " + host + "\n";
             m_statusBar->setMessageBar(str);
             m_console->putData(str.toUtf8());
+            ui->actiondoubleMode->setEnabled(false);
             break;
     }
 }
@@ -127,12 +128,12 @@ void MainWindow::modbusDataProcessing(int numDev, const QVector<unsigned short>&
 
     if(data.size()!=0){
         m_looker->setEnabled(numDev,true);
-        doubleData.append(static_cast<double>(data.at(1)+65536*data.at(0))/1000.0);
-        doubleData.append(static_cast<double>(data.at(3)+65536*data.at(2))/1000.0);
-        doubleData.append(static_cast<double>(data.at(5)+65536*data.at(4))/1000.0);
-        doubleData.append(static_cast<double>(60000-data.at(9)-65536*data.at(8))/1000.0);
-        doubleData.append(static_cast<double>(60000-data.at(11)-65536*data.at(10))/1000.0);
-        doubleData.append(static_cast<double>(60000-data.at(13)-65536*data.at(12))/1000.0);
+        doubleData.append((data.at(1)+65536*data.at(0))/1000.0);
+        doubleData.append((data.at(3)+65536*data.at(2))/1000.0);
+        doubleData.append((data.at(5)+65536*data.at(4))/1000.0);
+        doubleData.append((60000-data.at(9)-65536*data.at(8))/1000.0);
+        doubleData.append((60000-data.at(11)-65536*data.at(10))/1000.0);
+        doubleData.append((data.at(13)+65536*data.at(12)));
         m_looker->setData(doubleData,numDev);
     }
     else{
@@ -145,23 +146,26 @@ void MainWindow::clearConsole(){
 }
 
 
-
+//Показать консоль
 void MainWindow::on_actionconsoleOn_toggled(bool arg1){
     m_console->setVisible(arg1);
 }
 
-
+//Показать настройки
 void MainWindow::on_actionsettingsOn_toggled(bool arg1){
     m_connectionPanel->setVisible(arg1);
 }
 
-
+//Переключение tcp|COM
 void MainWindow::on_actiontcp_com_toggled(bool arg1){
     m_connectionPanel->setInterface(arg1);
 }
 
-
+//Переключение 1-2 устройства
 void MainWindow::on_actiondoubleMode_toggled(bool arg1){
     m_connectionPanel->setDoubleMode(arg1);
+    m_modbusClient->setDoubleMode(arg1);
+    m_looker->enableSecondLooker(arg1);
+
 }
 

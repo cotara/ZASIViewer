@@ -78,7 +78,7 @@ int ConnectionPanel::getPort(int number){
         return -1;
 }
 
-int ConnectionPanel::getDevNum(int number){
+int ConnectionPanel::getServer(int number){
     if(number==1)
         return ui->deviceNumLine->value();
     else if(number==2)
@@ -96,7 +96,7 @@ int ConnectionPanel::getDiam(int number)
     else
         return -1;
 }
-
+//Изменение кнопки при изменении подключения
 void ConnectionPanel::connectionChanged(int , int state,const QString)
 {
     switch(state){
@@ -130,7 +130,7 @@ void ConnectionPanel::on_portsBox_currentIndexChanged(int i){
         QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
         int mun = ports.count();
         if (mun-1<i){
-                QMessageBox::critical(this,"Внимание!","COM-порт 1 отсутсвует");
+                QMessageBox::critical(this,"Внимание!","COM-порт отсутсвует");
                 on_updAvblPortsButt_clicked();
                 return;
         }
@@ -204,7 +204,6 @@ void ConnectionPanel::oneTwoChange(int arg1){
     ui->deviceNumLine2->setVisible(arg1);
     ui->diamSpinBox2->setVisible(arg1);
     ui->ldm2_label->setVisible(arg1);
-    emit doubleModeChanged(arg1);//Засылааем инфу момбас классу
 }
 
 void ConnectionPanel::elementsDisable(bool state){
@@ -218,8 +217,6 @@ void ConnectionPanel::elementsDisable(bool state){
     ui->ipAdd2->setEnabled(state);
     ui->port->setEnabled(state);
     ui->port2->setEnabled(state);
-
-
 }
 
 

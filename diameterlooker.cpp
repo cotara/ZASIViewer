@@ -8,7 +8,9 @@ diameterLooker::diameterLooker(QWidget *parent, int num, int diam) :  QGroupBox(
     m_diam = diam;
     m_centerViewer = new centerViewer(this,m_diam);
     ui->HLayout->addWidget(m_centerViewer);
-
+    QPalette palette;
+    palette.setColor(QPalette::WindowText,Qt::red);
+    ui->lcdNumber->setPalette(palette);
 }
 
 diameterLooker::~diameterLooker()
