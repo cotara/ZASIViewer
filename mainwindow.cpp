@@ -101,10 +101,9 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
     }
 }
 
-void MainWindow::connectionFailed(int numDev,const QString &msg){
+void MainWindow::connectionFailed(const QString &msg){
     QString str;
-    str = "Устройство c адресом " + QString::number(numDev) + " отключено. " + msg + "\n";
-    m_statusBar->setMessageBar(str);
+    m_statusBar->setMessageBar(msg);
     m_console->putData(str.toUtf8());
     m_looker->setEnabled(numDev,false);
 }
