@@ -158,12 +158,12 @@ void ConnectionPanel::on_updAvblPortsButt_clicked(){
 //ПОДКЛЮЧИТЬСЯ!
 void ConnectionPanel::on_connectButton_clicked(){
     if(!m_interface)//Выбран режим компорта
-       emit connectionPushed(1, false,ui->portsBox->currentText(),ui->spdBox->currentText().toInt(),ui->deviceNumLine->text().toInt());
+       emit connectionPushed(1, ui->portsBox->currentText(),ui->spdBox->currentText().toInt(),ui->deviceNumLine->text().toInt());
 
     else{//Выбран режим TCP|IP
-        emit connectionPushed(1, true,getIpAdd(1),getPort(1),ui->deviceNumLine->text().toInt());
+        emit connectionPushed(1, getIpAdd(1),getPort(1),ui->deviceNumLine->text().toInt());
         if(m_doubleMode)
-            emit connectionPushed(2, true,getIpAdd(2),getPort(2),ui->deviceNumLine2->text().toInt());
+            emit connectionPushed(2, getIpAdd(2),getPort(2),ui->deviceNumLine2->text().toInt());
     }
 }
 

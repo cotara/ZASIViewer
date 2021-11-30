@@ -31,56 +31,39 @@ ModBusClient::~ModBusClient()
 
 //Изменен тип подключениея COM-0/TCP-1
 void ModBusClient::onConnectTypeChanged(bool type_tcp){
-    if (m_ModbusClient1) {
-        m_ModbusClient1->disconnectDevice();
-        delete m_ModbusClient1;
-        m_ModbusClient1 = nullptr;
-    }
-    if (m_ModbusClient2) {
-        m_ModbusClient2->disconnectDevice();
-        delete m_ModbusClient2;
-        m_ModbusClient2 = nullptr;
-    }
 
-    m_ModbusClient = nullptr;
+    for(QModbusClient *i:m_ModbusClients){
+        i->disconnectDevice();
+        delete i;
+    }
+    m_ModbusClients.clear();
+    m_type = type_tcp;              //Сохраняем тип текущего соединения
+    for(int i=0;i<m_doubleMode+1;i++){
+        if (type_tcp == Serial)
+            m_ModbusClients.append(new QModbusRtuSerialMaster(this));
+        else if (type_tcp == Tcp)
+            m_ModbusClients.append(new QModbusTcpClient(this));
 
-    auto type = static_cast<ConnectionType>(type_tcp);
-    if (type == Serial){
-        m_ModbusClient1 = new QModbusRtuSerialMaster(this);
-    }
-    else if (type == Tcp){
-        m_ModbusClient1 = new QModbusTcpClient(this);
-        m_ModbusClient2 = new QModbusTcpClient(this);
-    }
-
-    if (!m_ModbusClient1) {
-        if (type == Serial)
-            emit errorOccured(m_server1,"Could not create Modbus master 1.");
-        else
-            emit errorOccured(m_server1,"Could not create Modbus client 1.");
-    }
-    else{
-        connect(m_ModbusClient1, &QModbusClient::stateChanged, this,[=](QModbusDevice::State state){ onModbusStateChanged(1,m_server1,state);});
-        connect(m_ModbusClient1, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(m_server1, m_ModbusClient1->errorString());});
-    }
-
-    if (!m_ModbusClient2 ) {
-        if(type == Tcp)    //т.к. для serial второй клиент никогда не будет создан
-            emit errorOccured(m_server2,"Could not create Modbus client 2.");
-    }
-    else{
-        connect(m_ModbusClient2, &QModbusClient::stateChanged, this, [=](QModbusDevice::State state){ onModbusStateChanged(1,m_server2,state);});
-        connect(m_ModbusClient2, &QModbusClient::errorOccurred, this,[=]{emit errorOccured(m_server2, m_ModbusClient2->errorString());});
+        if (!m_ModbusClients[i]) {
+            if (type_tcp == Serial)
+                emit errorOccured(m_servers[i],"Could not create Modbus RTU master #" + QString::number(i));
+             else if (type_tcp == Tcp)
+                emit errorOccured(m_servers[i],"Could not create Modbus TCP client"+ QString::number(i));
+        }
+        else{
+            connect(m_ModbusClients[i], &QModbusClient::stateChanged, this,[=](QModbusDevice::State state){ onModbusStateChanged(i,m_servers[i],state);});
+            connect(m_ModbusClients[i], &QModbusClient::errorOccurred, this,[=]{emit errorOccured(m_servers[i], m_ModbusClients[i]->errorString());});
+        }
     }
 }
 
-void ModBusClient::setServer1(int serverAdd){
-    m_server1 = serverAdd;
+void ModBusClient::setServer(int numDev, int serverAdd){
+    if(m_servers.size()<numDev+1)
+        m_servers.append(serverAdd);
+    else
+        m_servers[numDev] =serverAdd;
 }
 
-void ModBusClient::setServer2(int serverAdd){
-    m_server2 = serverAdd;
-}
 
 void ModBusClient::setDoubleMode(bool doubleMode){
     m_doubleMode = doubleMode;
@@ -90,46 +73,33 @@ void ModBusClient::setDoubleMode(bool doubleMode){
 //ipadd - адрес в случае с tcp или имя COM-порта в случае с serial
 //port - порт в случае с tcp или скорость в случае с serial
 //numDev - номер деваяйса по порядку - 1 или 2.
-void ModBusClient::onConnect(int numDev, bool type, QString ipadd,int port, int server){
-    if(numDev == 1){
-        m_ModbusClient = m_ModbusClient1;
-    }
-    else if(numDev == 2){
-        m_ModbusClient = m_ModbusClient2;
+void ModBusClient::onConnect(int numDev, QString ipadd,int port, int server){
+    if(m_ModbusClients.size()< numDev+1){
+         emit errorOccured(server,"Could not connect to " + ipadd + ":" + QString::number(port));
     }
 
-    if (!m_ModbusClient)
-        return;
-    m_type = type;//Сохраняем тип текущего соединения
-    if (m_ModbusClient->state() != QModbusDevice::ConnectedState) {
-        if (type == Serial) {
-                m_ModbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter,ipadd);
-                m_ModbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, port);
-                m_ModbusClient->setConnectionParameter(QModbusDevice::SerialParityParameter,QSerialPort::NoParity);
-                m_ModbusClient->setConnectionParameter(QModbusDevice::SerialDataBitsParameter, QSerialPort::Data8);
-                m_ModbusClient->setConnectionParameter(QModbusDevice::SerialStopBitsParameter, QSerialPort::OneStop);
+    if (m_ModbusClients[numDev]->state() != QModbusDevice::ConnectedState) {
+        if (m_type == Serial) {
+                m_ModbusClients[numDev]->setConnectionParameter(QModbusDevice::SerialPortNameParameter,ipadd);
+                m_ModbusClients[numDev]->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, port);
+                m_ModbusClients[numDev]->setConnectionParameter(QModbusDevice::SerialParityParameter,QSerialPort::NoParity);
+                m_ModbusClients[numDev]->setConnectionParameter(QModbusDevice::SerialDataBitsParameter, QSerialPort::Data8);
+                m_ModbusClients[numDev]->setConnectionParameter(QModbusDevice::SerialStopBitsParameter, QSerialPort::OneStop);
         }
         else{
-            m_ModbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter, port);
-            m_ModbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, ipadd);
+            m_ModbusClients[numDev]->setConnectionParameter(QModbusDevice::NetworkPortParameter, port);
+            m_ModbusClients[numDev]->setConnectionParameter(QModbusDevice::NetworkAddressParameter, ipadd);
         }
-        if(numDev == 1){
-            m_host1 = ipadd + ":" + QString::number(port);
-            m_server1 = server;
-        }
-        else if(numDev == 2){
-            m_host2 = ipadd + ":" + QString::number(port);
-            m_server2 = server;
-        }
+        m_hosts[numDev] = ipadd + ":" + QString::number(port);
+        m_servers[numDev] = server;
 
-        if ( m_ModbusClient->state() != QModbusDevice::ConnectedState) {
-            m_ModbusClient->setTimeout(100);
-            m_ModbusClient->setNumberOfRetries(2);
-            m_ModbusClient->connectDevice();
-        }
+        m_ModbusClients[numDev]->setTimeout(100);
+        m_ModbusClients[numDev]->setNumberOfRetries(2);
+        m_ModbusClients[numDev]->connectDevice();
+
     }
     else
-        m_ModbusClient->disconnectDevice();
+        m_ModbusClients[numDev]->disconnectDevice();
 }
 //Состояние изменилось
 //numDev - номер устройства 1 или 2

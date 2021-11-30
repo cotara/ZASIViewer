@@ -13,10 +13,9 @@ public:
     explicit ModBusClient(QObject *parent = nullptr);
     ~ModBusClient();
 public slots:
-    void onConnect(int numDev, bool type, QString ipadd,int port, int server);
+    void onConnect(int numDev, QString ipadd,int port, int server);
     void onConnectTypeChanged(bool type);
-    void setServer1(int serverAdd);
-    void setServer2(int serverAdd);
+    void setServer(int numDev, int serverAdd);
     void setDoubleMode(bool doubleMode);
 signals:
     void connectionStatus(int server, int status, const QString &host);
@@ -24,10 +23,11 @@ signals:
     void modbusDataReceved(int numDev, const QVector<unsigned short>& data);
     void modbusRequestSent(int numDev, const QByteArray &req);
 private:
-        QModbusClient *m_ModbusClient=nullptr,*m_ModbusClient1=nullptr, *m_ModbusClient2=nullptr;
+        //QModbusClient *m_ModbusClient=nullptr,*m_ModbusClient1=nullptr, *m_ModbusClient2=nullptr;
+        QVector <QModbusClient*> m_ModbusClients;
         QTimer *m_timer =nullptr;
-        QString m_host1,m_host2;
-        int m_server1=0,m_server2=0;
+        QVector<QString> m_hosts;
+        QVector<int> m_servers;
         bool m_type=false,m_doubleMode=false;
         QModbusDataUnit readRequest() const;
         QVector<unsigned short> modbusRegs;

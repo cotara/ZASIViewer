@@ -39,7 +39,7 @@ private:
     void elementsDisable(bool state);
     bool m_interface=false,m_doubleMode = false;
 signals:
-    void connectionPushed(int numDev, bool type, QString ipadd,int port, int server);
+    void connectionPushed(int numDev, QString ipadd,int port, int server);
     void connectionTypeChanged(bool type);
     void doubleModeChanged(bool mode);
     void server1changed(int serverAdd);
