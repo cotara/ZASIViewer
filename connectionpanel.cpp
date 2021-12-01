@@ -104,27 +104,21 @@ int ConnectionPanel::getDiam(int number)
         return -1;
 }
 //Изменение кнопки при изменении подключения
-void ConnectionPanel::connectionChanged(int , int state,const QString)
+void ConnectionPanel::connectionChanged(int state)
 {
     switch(state){
         case 0:   //Отключено
             ui->connectButton->setText("Подключиться");
             ui->connectButton->setEnabled(true);
-            elementsDisable(true);
+            elementsEnable(true);
             break;
         case 1:    //Подключение
-            ui->connectButton->setEnabled(false);
-            elementsDisable(false);
-            break;
-        case 2:     //Подключено
             ui->connectButton->setText("Отключиться");
             ui->connectButton->setEnabled(true);
-            elementsDisable(false);
-            break;
-        case 3:       //Отключение
-           ui->connectButton->setEnabled(false);
-           elementsDisable(false);
-        break;
+            elementsEnable(false);
+        case 2:     //Подключено//Отключение
+            ui->connectButton->setEnabled(false);
+            elementsEnable(false);
     }
 }
 
@@ -190,28 +184,29 @@ void ConnectionPanel::interfaceSwitch(bool type){
         ui->spdBox->setVisible(!type);
 }
 
-void ConnectionPanel::setStatusLabel(int numDev, bool state){
-    if (state) {
-        if(numDev==0){
+void ConnectionPanel::setStatusLabel(int server, bool state){
+
+    if(ui->deviceNumLine->text().toInt() == server){
+        if(state){
             ui->statusLabel->setStyleSheet(lightgreen);
             ui->statusLabel->setText("On-line");
         }
-        else if(numDev==1){
-            ui->statusLabel2->setStyleSheet(lightgreen);
-            ui->statusLabel2->setText("On-line");
-        }
-    }
-    else{
-        if(numDev==0){
+        else {
             ui->statusLabel->setStyleSheet(red);
             ui->statusLabel->setText("Off-line");
         }
-        else if(numDev==1){
+    }
+    else if(ui->deviceNumLine2->text().toInt() == server){
+        if(state){
+            ui->statusLabel2->setStyleSheet(lightgreen);
+            ui->statusLabel2->setText("On-line");
+        }
+        else {
             ui->statusLabel2->setStyleSheet(red);
             ui->statusLabel2->setText("Off-line");
         }
-
     }
+
 }
 //Переключение режимов 1-2 устройства
 void ConnectionPanel::oneTwoChange(int arg1){
@@ -227,7 +222,7 @@ void ConnectionPanel::oneTwoChange(int arg1){
     ui->ldm2_label->setVisible(arg1);
 }
 
-void ConnectionPanel::elementsDisable(bool state){
+void ConnectionPanel::elementsEnable(bool state){
     emit doubleButtonBlock(state);
     ui->portsBox->setEnabled(state);
     ui->updAvblPortsButt->setEnabled(state);

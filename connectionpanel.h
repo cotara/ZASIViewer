@@ -25,9 +25,9 @@ public:
     void setInterface(bool type){m_interface = type;interfaceSwitch(m_interface);}
     void setDoubleMode(bool mode){m_doubleMode = mode;oneTwoChange(m_doubleMode);}
 public slots:
-    void connectionChanged(int, int,const QString);
+    void connectionChanged(int state);
     void interfaceSwitch(bool type);
-    void setStatusLabel(int numDev,bool state);
+    void setStatusLabel(int server,bool state);
 private slots:
     void on_portsBox_currentIndexChanged(int index);
     void on_updAvblPortsButt_clicked();
@@ -36,7 +36,7 @@ private slots:
 
 private:
     Ui::ConnectionPanel *ui;
-    void elementsDisable(bool state);
+    void elementsEnable(bool state);
     bool m_interface=false,m_doubleMode = false;
 
 

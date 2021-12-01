@@ -37,6 +37,8 @@ public slots:
     void setIpAdd_comp(const QString& ipAdd_comp);
     void setPort_boud(int port_boud);
     void setModel(int model);
+    int getServer(){return m_server;};
+    void setLookerEnabled(bool state);
 private:
     QVBoxLayout *VLayout;
     QModbusClient *m_ModbusClient;
@@ -55,12 +57,12 @@ private slots:
     void handlerTimer();
     void onReadReady();
     QModbusDataUnit readRequest() const;
-
+    void modbusDataProcessing();
 signals:
     void connectionStatus(int server, int status, const QString &host);
     void errorOccured(const QString &msg);
-    void modbusDataReceved(int server, const QVector<unsigned short>& data);
-    void modbusRequestSent(int server, const QByteArray &req);
+    void modbusDataReceved(int server, const QString &str);
+    void modbusRequestSent(int server, const QString &str);
 
 };
 

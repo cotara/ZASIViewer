@@ -138,7 +138,7 @@ void LDMDevice::handlerTimer(){
     if (auto *reply = m_ModbusClient->sendReadRequest(m_unit, m_server)) {
         if (!reply->isFinished()){
             connect(reply, &QModbusReply::finished, this, &LDMDevice::onReadReady);
-            emit modbusRequestSent(reply->serverAddress(),"");//Вывод в консоль
+            emit modbusRequestSent(reply->serverAddress(),"REQ TO " +  QString::number(m_server) + " DEV: ");//Вывод в консоль
         }
         else
             delete reply; // broadcast replies return immediately
@@ -166,7 +166,7 @@ void LDMDevice::onReadReady()
         for (int i = 0, total = int(unit.valueCount()); i < total; ++i)
             modbusRegs.append(unit.value(i));
 
-        emit modbusDataReceved(servAdd,modbusRegs);
+        modbusDataProcessing();
     }
     else{
          emit errorOccured("Read response error (" + QString::number(servAdd) + " DEV): "+ reply->errorString());
@@ -174,6 +174,33 @@ void LDMDevice::onReadReady()
     }
 
     reply->deleteLater();
+}
+
+//Обработчки данных, пришедших от устройства
+void LDMDevice::modbusDataProcessing(){
+    QString str = "REPLY FROM " +  QString::number(m_server) + " DEV: ";
+
+    for(unsigned short i:modbusRegs)
+        str+=QString::number(i) + " ";
+    str+="\n";
+
+    modbusDataReceved(m_server, str);
+
+    QVector<double> doubleData, tempData;
+
+    if(modbusRegs.size()!=0){
+        setLookerEnabled(true);
+        doubleData.append((modbusRegs.at(1)+65536*modbusRegs.at(0))/1000.0);
+        doubleData.append((modbusRegs.at(3)+65536*modbusRegs.at(2))/1000.0);
+        doubleData.append((modbusRegs.at(5)+65536*modbusRegs.at(4))/1000.0);
+        doubleData.append((60000-modbusRegs.at(9)-65536*modbusRegs.at(8))/1000.0);
+        doubleData.append((60000-modbusRegs.at(11)-65536*modbusRegs.at(10))/1000.0);
+        doubleData.append((modbusRegs.at(13)+65536*modbusRegs.at(12)));
+        m_looker->setData(doubleData);
+    }
+    else{
+        setLookerEnabled(false);
+    }
 }
 
 QModbusDataUnit LDMDevice::readRequest() const
@@ -202,4 +229,8 @@ void LDMDevice::setPort_boud(int port_boud){
 void LDMDevice::setModel(int model){
     m_model = model;
     m_looker->setModel(model);
+}
+
+void LDMDevice::setLookerEnabled(bool state){
+    m_looker->setEnabled(state);
 }

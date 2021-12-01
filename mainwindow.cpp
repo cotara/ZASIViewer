@@ -49,8 +49,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     for (LDMDevice* i:devices){
         connect(i,&LDMDevice::connectionStatus,this,&MainWindow::connectionChanged);                   //Состояние соединения изменилось
         connect(i,&LDMDevice::errorOccured, this,&MainWindow::connectionFailed);                       //Сообщение об ошибке
-        connect(i,&LDMDevice::modbusRequestSent,this,&MainWindow::modbusReqPrint);                     //Печатаем запрос
-        connect(i,&LDMDevice::modbusDataReceved,this,&MainWindow::modbusDataProcessing);               //Пришли данные по modbus
+        connect(i,&LDMDevice::modbusRequestSent,this,&MainWindow::modbusPacketPrint);                     //Печатаем запрос
+        connect(i,&LDMDevice::modbusDataReceved,this,&MainWindow::modbusPacketPrint);               //Пришли данные по modbus
      }
 
 
@@ -74,15 +74,23 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
     if(connectionStatuses.contains(server))
         connectionStatuses[server] = status;
 
+    //Включаем/Отключаем лукеры
+    for(LDMDevice* i:devices){
+        if(i->getServer() == server){
+            if(status == 0)
+                i->setLookerEnabled(false);
+            else if(status == 2)
+                i->setLookerEnabled(true);
+        }
+    }
 
     switch(status){
         case 0:   //Отключено
             str = "Отключено от " + host + "\n";
             m_statusBar->setMessageBar(str);            
-            m_statusBar->setStatus(false);
+            m_connectionPanel->setStatusLabel(server,false);
             m_console->putData(str.toUtf8());
-            m_looker->setEnabled(server,false);
-            ui->actiondoubleMode->setEnabled(true);
+
             break;
         case 1:    //Подключение
            str = "Подключение к " + host + "\n";
@@ -93,7 +101,7 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
         case 2:     //Подключено
             str = "Подключено к " + host + "\n";
             m_statusBar->setMessageBar(str);            
-            m_statusBar->setStatus(true);
+            m_connectionPanel->setStatusLabel(server,true);
             m_console->putData(str.toUtf8());
             ui->actiondoubleMode->setEnabled(false);
             break;
@@ -105,14 +113,20 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
             break;
     }
     int statuses =0;
-    for(QMap i:connectionStatuses){
-         statuses+=i.value();
+    for(auto  i:connectionStatuses.keys()){
+         statuses+=connectionStatuses.value(i);
     }
     if(statuses == 0){//Все отключились
-          //!!!&ConnectionPanel::connectionChanged//Когда подл/откл меняем кнопку
+        ui->actiondoubleMode->setEnabled(true);
+        m_connectionPanel->connectionChanged(0);
     }
-    else if(statuses == connectionStatuses.size())){//Все подключились
-
+    else if(statuses == connectionStatuses.size()){//Все подключились
+        ui->actiondoubleMode->setEnabled(false);
+        m_connectionPanel->connectionChanged(1);
+    }
+    else{//Происходит процесс подключения
+        ui->actiondoubleMode->setEnabled(false);
+        m_connectionPanel->connectionChanged(2);
     }
 
 
@@ -125,10 +139,9 @@ void MainWindow::connectionFailed( const QString &msg){
 }
 
 void MainWindow::connectionPushed(bool action){
-//??? Здесь может быть ошибка. Для serial надо вызвать подключение только один раз
     if(action)  {
-    for(LDMDevice* i:devices)
-            i->onConnect();
+        for(LDMDevice* i:devices)
+                i->onConnect();
     }
     else {
         for(LDMDevice* i:devices)
@@ -136,37 +149,11 @@ void MainWindow::connectionPushed(bool action){
     }
 }
 
-void MainWindow::modbusReqPrint(int server, const QByteArray &req){
-    QString str = "REQ TO " +  QString::number(server) + " DEV: " + req;
+void MainWindow::modbusPacketPrint(int , const QString &str){
     m_console->putData(str.toUtf8());
 }
 
-//Обработчки данных, пришедших от устройства
-void MainWindow::modbusDataProcessing(int numDev, const QVector<unsigned short>& data){
-    QString str = "REPLY FROM " +  QString::number(numDev) + " DEV: ";
 
-    for(short i:data)
-        str+=QString::number(i) + " ";
-
-    str+="\n";
-    m_console->putData(str.toUtf8());
-
-    QVector<double> doubleData, tempData;
-
-    if(data.size()!=0){
-        m_looker->setEnabled(numDev,true);
-        doubleData.append((data.at(1)+65536*data.at(0))/1000.0);
-        doubleData.append((data.at(3)+65536*data.at(2))/1000.0);
-        doubleData.append((data.at(5)+65536*data.at(4))/1000.0);
-        doubleData.append((60000-data.at(9)-65536*data.at(8))/1000.0);
-        doubleData.append((60000-data.at(11)-65536*data.at(10))/1000.0);
-        doubleData.append((data.at(13)+65536*data.at(12)));
-        m_looker->setData(doubleData,numDev);
-    }
-    else{
-        m_looker->setEnabled(numDev,false);
-    }
-}
 
 void MainWindow::clearConsole(){
     m_console->clear();
@@ -186,6 +173,7 @@ void MainWindow::on_actionsettingsOn_toggled(bool arg1){
 //Переключение tcp|COM
 void MainWindow::on_actiontcp_com_toggled(bool arg1){
     m_connectionPanel->setInterface(arg1);
+    //!!!!!!!
 }
 
 //Переключение 1-2 устройства
@@ -193,6 +181,5 @@ void MainWindow::on_actiondoubleMode_toggled(bool arg1){
     m_connectionPanel->setDoubleMode(arg1);
     m_modbusClient->setDoubleMode(arg1);
     m_looker->enableSecondLooker(arg1);
-
 }
 
