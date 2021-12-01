@@ -17,6 +17,7 @@ public:
     ~diameterLooker();
     void setData(const QVector<double>& data);
     void setDiam(int diam);
+    void setName(int server);
 private:
     Ui::diameterLooker *ui;
     QVector <double> m_data;

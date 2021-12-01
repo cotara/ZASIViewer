@@ -6,39 +6,42 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     ui->setupUi(this);
 
     HLayout = new QHBoxLayout();
+    devicesLayout = new QHBoxLayout();
     VLayout = new QVBoxLayout();
     centralWidget()->setLayout(HLayout);
 
     m_connectionPanel = new ConnectionPanel(this);
+
     m_console = new Console(this);
     m_console->setMaximumHeight(300);
     ui->actionconsoleOn->setChecked(false);
-    //m_console->setMinimumHeight(200);
     connect(m_connectionPanel,&ConnectionPanel::clearConsole,this,&MainWindow::clearConsole);
 
-    m_looker = new Looker(this);
-    m_looker->setMinimumHeight(500);
+    //Создаем девайсы
+    devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(0),m_connectionPanel->getPort(0),m_connectionPanel->getServer(0),ui->actiontcp_com));
+    for (int i=1;i<2;i++){
+        if(ui->actiontcp_com)//tcp mode
+            devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(i),m_connectionPanel->getPort(i),m_connectionPanel->getServer(i),ui->actiontcp_com));
+        else
+            devices.append(new LDMDevice(this,devices[0]->getModbusClient(),m_connectionPanel->getServer(i),ui->actiontcp_com));
+    }
+
     m_statusBar = new StatusBar(ui->statusbar);
 
     HLayout->addLayout(VLayout);
     HLayout->addWidget(m_connectionPanel);
 
-    VLayout->addWidget(m_looker);
+    VLayout->addLayout(devicesLayout);
     VLayout->addWidget(m_console);
+    for(LDMDevice* i: devices){
+        devicesLayout->addWidget(i);
+    }
 
 
-    m_connectionPanel->setMaximumWidth(250);
+    connect(m_connectionPanel,&ConnectionPanel::connectionPushed,this,&MainWindow::connectionPushed);//Когда нажата кнопка пробуем подл/откл
+    connect(m_connectionPanel,&ConnectionPanel::serverChanged,[=](int numDev, int serverAdd){devices[numDev]->setServer(serverAdd);});//Изменился сервер
+    connect(m_connectionPanel,&ConnectionPanel::modelChanged,[=](int numDev, int model){devices[numDev]->setModel(model);});
 
-    m_modbusClient = new ModBusClient(this);
-
-    connect(m_connectionPanel,&ConnectionPanel::connectionPushed,m_modbusClient,&ModBusClient::onConnect);//Когда нажата кнопка пробуем подл/откл
-    connect(m_connectionPanel,&ConnectionPanel::connectionTypeChanged,m_modbusClient,&ModBusClient::onConnectTypeChanged);//Изменился тип подключения
-    connect(m_connectionPanel,&ConnectionPanel::server1changed,m_modbusClient,&ModBusClient::setServer1);//Изменился сервер
-    connect(m_connectionPanel,&ConnectionPanel::server2changed,m_modbusClient,&ModBusClient::setServer2);
-    connect(m_connectionPanel,&ConnectionPanel::server1changed,m_looker,&Looker::setNumDev1);//Изменился сервер
-    connect(m_connectionPanel,&ConnectionPanel::server2changed,m_looker,&Looker::setNumDev2);
-    connect(m_connectionPanel,&ConnectionPanel::diameter1changed,m_looker,&Looker::setDiam1);//Изменился диаметр (модель
-    connect(m_connectionPanel,&ConnectionPanel::diameter2changed,m_looker,&Looker::setDiam2);
 
     connect(m_modbusClient,&ModBusClient::connectionStatus, m_connectionPanel,&ConnectionPanel::connectionChanged);//Когда подл/откл меняем кнопку
     connect(m_modbusClient,&ModBusClient::connectionStatus, this,&MainWindow::connectionChanged);                  //Когда подл/откл выводим в бар
@@ -106,6 +109,18 @@ void MainWindow::connectionFailed(const QString &msg){
     m_statusBar->setMessageBar(msg);
     m_console->putData(str.toUtf8());
     m_looker->setEnabled(numDev,false);
+}
+
+void MainWindow::connectionPushed(bool action){
+//??? Здесь может быть ошибка. Для serial надо вызвать подключение только один раз
+    if(action)  {
+    for(LDMDevice* i:devices)
+            i->onConnect();
+    }
+    else {
+        for(LDMDevice* i:devices)
+                i->onDisconnect();
+    }
 }
 
 void MainWindow::modbusReqPrint(int numDev, const QByteArray &req){

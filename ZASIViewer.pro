@@ -18,10 +18,9 @@ SOURCES += \
     connectionpanel.cpp \
     console.cpp \
     diameterlooker.cpp \
-    looker.cpp \
+    ldmdevice.cpp \
     main.cpp \
     mainwindow.cpp \
-    modbusclient.cpp \
     statusbar.cpp
 
 HEADERS += \
@@ -29,15 +28,13 @@ HEADERS += \
     connectionpanel.h \
     console.h \
     diameterlooker.h \
-    looker.h \
+    ldmdevice.h \
     mainwindow.h \
-    modbusclient.h \
     statusbar.h
 
 FORMS += \
     connectionpanel.ui \
     diameterlooker.ui \
-    looker.ui \
     mainwindow.ui
 
 # Default rules for deployment.

@@ -36,6 +36,10 @@ void diameterLooker::setDiam(int diam)
     m_centerViewer->setScale(m_diam);
 }
 
+void diameterLooker::setName(int server){
+    setTitle("Прибор №" + QString::number(server));
+}
+
 void diameterLooker::setError(int error){
      QString error_message;
      switch (error) {

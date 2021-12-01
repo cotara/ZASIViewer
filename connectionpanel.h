@@ -23,12 +23,12 @@ public:
     int getServer(int number);
     int getDiam(int number);
     void setInterface(bool type){m_interface = type;interfaceSwitch(m_interface);}
-    void setDoubleMode(bool type){m_doubleMode = type;oneTwoChange(m_doubleMode);}
+    void setDoubleMode(bool mode){m_doubleMode = mode;oneTwoChange(m_doubleMode);}
 public slots:
     void connectionChanged(int, int,const QString);
-
+    void interfaceSwitch(bool type);
 private slots:
-    void interfaceSwitch(bool checked);
+
     void on_portsBox_currentIndexChanged(int index);
     void on_updAvblPortsButt_clicked();
     void on_connectButton_clicked();
@@ -39,13 +39,11 @@ private:
     void elementsDisable(bool state);
     bool m_interface=false,m_doubleMode = false;
 signals:
-    void connectionPushed(int numDev, QString ipadd,int port, int server);
-    void connectionTypeChanged(bool type);
-    void doubleModeChanged(bool mode);
-    void server1changed(int serverAdd);
-    void server2changed(int serverAdd);
-    void diameter1changed(int diam);
-    void diameter2changed(int diam);
+    void connectionPushed(bool action);
+    void ipAdd_compChanged(int numDev,const QString &ipAdd_comp);
+    void port_boudChanged(int numDev,int port_boud);
+    void serverChanged(int numDev, int serverAdd);
+    void modelChanged(int numDev,int model);
     void clearConsole();
     void doubleButtonBlock(bool state);
 

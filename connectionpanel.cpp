@@ -39,18 +39,28 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
 
     ui->spdBox->setCurrentIndex(0);
 
-    connect(ui->deviceNumLine,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit server1changed(i);});
-    connect(ui->deviceNumLine2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit server2changed(i);});
+    connect(ui->deviceNumLine,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(0,i);});
+    connect(ui->deviceNumLine2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(1,i);});
 
-    connect(ui->diamSpinBox1,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit diameter1changed(i);});
-    connect(ui->diamSpinBox2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit diameter2changed(i);});
+    connect(ui->diamSpinBox1,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(0,i);});
+    connect(ui->diamSpinBox2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(1,i);});
+
+    connect(ui->ipAdd,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(0,ipAdd_comp);});
+    connect(ui->ipAdd2,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(1,ipAdd_comp);});
+    connect(ui->portsBox,&QComboBox::currentTextChanged,[=](const QString &comport){ emit ipAdd_compChanged(0,comport);});
+
+    connect(ui->port,&QLineEdit::textChanged,[=](const QString &port){ emit port_boudChanged(0,port.toInt());});
+    connect(ui->port2,&QLineEdit::textChanged,[=](const QString &port){ emit port_boudChanged(1,port.toInt());});
+    connect(ui->spdBox,&QComboBox::currentTextChanged,[=](const QString &baud){ emit port_boudChanged(0,baud.toInt());});
+
+    connect(ui->diamSpinBox1,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(0,i);});
+    connect(ui->diamSpinBox2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(1,i);});
 
     ui->deviceNumLine->setValue(1);
     ui->deviceNumLine2->setValue(2);
 
     ui->diamSpinBox1->setValue(50);
     ui->diamSpinBox2->setValue(50);
-
 
     connect(ui->clearButton,&QPushButton::clicked,this,&ConnectionPanel::clearConsole);
 }
@@ -157,40 +167,31 @@ void ConnectionPanel::on_updAvblPortsButt_clicked(){
 
 //ПОДКЛЮЧИТЬСЯ!
 void ConnectionPanel::on_connectButton_clicked(){
-    if(!m_interface)//Выбран режим компорта
-       emit connectionPushed(1, ui->portsBox->currentText(),ui->spdBox->currentText().toInt(),ui->deviceNumLine->text().toInt());
+    if(ui->connectButton->text() == "Подключиться")
+        emit connectionPushed(true);
 
-    else{//Выбран режим TCP|IP
-        emit connectionPushed(1, getIpAdd(1),getPort(1),ui->deviceNumLine->text().toInt());
-        if(m_doubleMode)
-            emit connectionPushed(2, getIpAdd(2),getPort(2),ui->deviceNumLine2->text().toInt());
-    }
+    else if(ui->connectButton->text() == "Отключиться")
+        emit connectionPushed(false);
+
 }
 
+//Переключение режима TCP - SERIAL
+void ConnectionPanel::interfaceSwitch(bool type){
+        ui->IPlabel->setVisible(type);
+        ui->IPlabel2->setVisible(type);
+        ui->ipAdd->setVisible(type);
+        ui->ipAdd2->setVisible(type);
+        ui->portLabel->setVisible(type);
+        ui->portLabel2->setVisible(type);
+        ui->port->setVisible(type);
+        ui->port2->setVisible(type);
 
-//Переключение режима TCP - RS485
-void ConnectionPanel::interfaceSwitch(bool checked){
-
-        ui->IPlabel->setVisible(checked);
-        ui->IPlabel2->setVisible(checked);
-        ui->ipAdd->setVisible(checked);
-        ui->ipAdd2->setVisible(checked);
-        ui->portLabel->setVisible(checked);
-        ui->portLabel2->setVisible(checked);
-        ui->port->setVisible(checked);
-        ui->port2->setVisible(checked);
-
-        ui->Portslabel->setVisible(!checked);
-        ui->portsBox->setVisible(!checked);
-        ui->updAvblPortsButt->setVisible(!checked);
-        ui->dscrLabel->setVisible(!checked);
-        ui->SpdLabel->setVisible(!checked);
-        ui->spdBox->setVisible(!checked);
-
-
-        emit connectionTypeChanged(checked);
-        oneTwoChange(m_doubleMode);
-
+        ui->Portslabel->setVisible(!type);
+        ui->portsBox->setVisible(!type);
+        ui->updAvblPortsButt->setVisible(!type);
+        ui->dscrLabel->setVisible(!type);
+        ui->SpdLabel->setVisible(!type);
+        ui->spdBox->setVisible(!type);
 }
 //Переключение режимов 1-2 устройства
 void ConnectionPanel::oneTwoChange(int arg1){
