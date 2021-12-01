@@ -27,8 +27,8 @@ public:
 public slots:
     void connectionChanged(int, int,const QString);
     void interfaceSwitch(bool type);
+    void setStatusLabel(int numDev,bool state);
 private slots:
-
     void on_portsBox_currentIndexChanged(int index);
     void on_updAvblPortsButt_clicked();
     void on_connectButton_clicked();
@@ -38,6 +38,12 @@ private:
     Ui::ConnectionPanel *ui;
     void elementsDisable(bool state);
     bool m_interface=false,m_doubleMode = false;
+
+
+    const QString lightgreen = "QLabel { background-color : lightgreen; }";
+    const QString yellow = "QLabel { background-color : yellow; }";
+    const QString red = "QLabel { background-color : red; color : white }";
+
 signals:
     void connectionPushed(bool action);
     void ipAdd_compChanged(int numDev,const QString &ipAdd_comp);

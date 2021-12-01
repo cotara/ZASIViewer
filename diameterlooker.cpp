@@ -1,11 +1,11 @@
 #include "diameterlooker.h"
 #include "ui_diameterlooker.h"
 
-diameterLooker::diameterLooker(QWidget *parent, int num, int diam) :  QGroupBox(parent), ui(new Ui::diameterLooker)
+diameterLooker::diameterLooker(QWidget *parent,int diam, int num) : Looker(parent,num), ui(new Ui::diameterLooker),m_diam(diam)
 {
+
     ui->setupUi(this);
-    setTitle("Прибор №" + QString::number(num));
-    m_diam = diam;
+
     m_centerViewer = new centerViewer(this,m_diam);
     ui->HLayout->addWidget(m_centerViewer);
     QPalette palette;
@@ -19,9 +19,14 @@ diameterLooker::~diameterLooker()
     delete m_centerViewer;
 }
 
-void diameterLooker::setData(const QVector<double> &data)
+void diameterLooker::setModel(int diam){
+    m_diam = diam;
+    m_centerViewer->setScale(m_diam);
+}
+
+void diameterLooker::rePaint()
 {
-    m_data = data;
+    QVector <double> m_data = data();
     ui->lcdNumber->display(m_data.at(0));//Основной диаметр
     ui->lcdNumber_2->display(m_data.at(1));//х Диаметр
     ui->lcdNumber_3->display(m_data.at(2));//y Диаметр
@@ -30,15 +35,7 @@ void diameterLooker::setData(const QVector<double> &data)
     setError(m_data.at(5));
 }
 
-void diameterLooker::setDiam(int diam)
-{
-    m_diam = diam;
-    m_centerViewer->setScale(m_diam);
-}
 
-void diameterLooker::setName(int server){
-    setTitle("Прибор №" + QString::number(server));
-}
 
 void diameterLooker::setError(int error){
      QString error_message;

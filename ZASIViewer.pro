@@ -19,6 +19,7 @@ SOURCES += \
     console.cpp \
     diameterlooker.cpp \
     ldmdevice.cpp \
+    looker.cpp \
     main.cpp \
     mainwindow.cpp \
     statusbar.cpp
@@ -29,6 +30,7 @@ HEADERS += \
     console.h \
     diameterlooker.h \
     ldmdevice.h \
+    looker.h \
     mainwindow.h \
     statusbar.h
 

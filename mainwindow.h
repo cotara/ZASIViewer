@@ -22,15 +22,6 @@ public:
     ~MainWindow();
 
 
-private:
-    Ui::MainWindow *ui;
-    QHBoxLayout *HLayout,*devicesLayout;
-    QVBoxLayout *VLayout;
-
-    StatusBar *m_statusBar;
-    QVector <LDMDevice*> devices;
-    ConnectionPanel *m_connectionPanel;
-    Console *m_console;
 
 
 private slots:
@@ -44,6 +35,19 @@ private slots:
     void on_actionsettingsOn_toggled(bool arg1);
     void on_actiontcp_com_toggled(bool arg1);
     void on_actiondoubleMode_toggled(bool arg1);
+
+private:
+    Ui::MainWindow *ui;
+    QHBoxLayout *HLayout,*devicesLayout;
+    QVBoxLayout *VLayout;
+
+    StatusBar *m_statusBar;
+    QVector <LDMDevice*> devices;
+    ConnectionPanel *m_connectionPanel;
+    Console *m_console;
+    QMap<int,bool> connectionStatuses;
+    int m_counDevices=2;
+
 
 };
 #endif // MAINWINDOW_H

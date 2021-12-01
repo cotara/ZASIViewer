@@ -38,23 +38,20 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     ui->spdBox->addItem(QStringLiteral("921600"), 921600);
 
     ui->spdBox->setCurrentIndex(0);
-
+    //Изменился сервер
     connect(ui->deviceNumLine,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(0,i);});
     connect(ui->deviceNumLine2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(1,i);});
-
+    //Изменилась модель
     connect(ui->diamSpinBox1,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(0,i);});
     connect(ui->diamSpinBox2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(1,i);});
-
+    //Изменился айпи или номер компорта
     connect(ui->ipAdd,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(0,ipAdd_comp);});
     connect(ui->ipAdd2,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(1,ipAdd_comp);});
     connect(ui->portsBox,&QComboBox::currentTextChanged,[=](const QString &comport){ emit ipAdd_compChanged(0,comport);});
-
+    //Изменился порт или скорость
     connect(ui->port,&QLineEdit::textChanged,[=](const QString &port){ emit port_boudChanged(0,port.toInt());});
     connect(ui->port2,&QLineEdit::textChanged,[=](const QString &port){ emit port_boudChanged(1,port.toInt());});
     connect(ui->spdBox,&QComboBox::currentTextChanged,[=](const QString &baud){ emit port_boudChanged(0,baud.toInt());});
-
-    connect(ui->diamSpinBox1,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(0,i);});
-    connect(ui->diamSpinBox2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(1,i);});
 
     ui->deviceNumLine->setValue(1);
     ui->deviceNumLine2->setValue(2);
@@ -71,27 +68,27 @@ ConnectionPanel::~ConnectionPanel(){
 
 
 QString ConnectionPanel::getIpAdd(int number){
-    if(number==1)
+    if(number==0)
         return ui->ipAdd->text();
-    else if(number==2)
+    else if(number==1)
         return ui->ipAdd2->text();
     else
         return QString("Empty Num");
 }
 
 int ConnectionPanel::getPort(int number){
-    if(number==1)
+    if(number==0)
         return ui->port->text().toInt();
-    else if(number==2)
+    else if(number==1)
         return ui->port2->text().toInt();
     else
         return -1;
 }
 
 int ConnectionPanel::getServer(int number){
-    if(number==1)
+    if(number==0)
         return ui->deviceNumLine->value();
-    else if(number==2)
+    else if(number==1)
         return ui->deviceNumLine2->value();
     else
         return -1;
@@ -99,9 +96,9 @@ int ConnectionPanel::getServer(int number){
 
 int ConnectionPanel::getDiam(int number)
 {
-    if(number==1)
+    if(number==0)
         return ui->diamSpinBox1->value();
-    else if(number==2)
+    else if(number==1)
         return ui->diamSpinBox2->value();
     else
         return -1;
@@ -133,19 +130,18 @@ void ConnectionPanel::connectionChanged(int , int state,const QString)
 
 
 //Выбор ком-порта
-void ConnectionPanel::on_portsBox_currentIndexChanged(int i){
+void ConnectionPanel::on_portsBox_currentIndexChanged(int index){
 
-    if (i != -1) {
+    if (index != -1) {
         QSerialPortInfo serial_info;
         QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
         int mun = ports.count();
-        if (mun-1<i){
+        if (mun-1<index){
                 QMessageBox::critical(this,"Внимание!","COM-порт отсутсвует");
                 on_updAvblPortsButt_clicked();
                 return;
         }
-        serial_info=ports.takeAt(i);
-
+        serial_info=ports.takeAt(index);
         ui->dscrLabel->setText(serial_info.description());
     }
 }
@@ -192,6 +188,30 @@ void ConnectionPanel::interfaceSwitch(bool type){
         ui->dscrLabel->setVisible(!type);
         ui->SpdLabel->setVisible(!type);
         ui->spdBox->setVisible(!type);
+}
+
+void ConnectionPanel::setStatusLabel(int numDev, bool state){
+    if (state) {
+        if(numDev==0){
+            ui->statusLabel->setStyleSheet(lightgreen);
+            ui->statusLabel->setText("On-line");
+        }
+        else if(numDev==1){
+            ui->statusLabel2->setStyleSheet(lightgreen);
+            ui->statusLabel2->setText("On-line");
+        }
+    }
+    else{
+        if(numDev==0){
+            ui->statusLabel->setStyleSheet(red);
+            ui->statusLabel->setText("Off-line");
+        }
+        else if(numDev==1){
+            ui->statusLabel2->setStyleSheet(red);
+            ui->statusLabel2->setText("Off-line");
+        }
+
+    }
 }
 //Переключение режимов 1-2 устройства
 void ConnectionPanel::oneTwoChange(int arg1){
