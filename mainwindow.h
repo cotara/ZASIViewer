@@ -21,9 +21,6 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-
-
-
 private slots:
     void connectionChanged(int numDev, int status,const QString &host);
     void connectionFailed(const QString &msg);
@@ -34,6 +31,7 @@ private slots:
     void on_actionsettingsOn_toggled(bool arg1);
     void on_actiontcp_com_toggled(bool arg1);
     void on_actiondoubleMode_toggled(bool arg1);
+    void connectNewDevice(LDMDevice* dev);
 
 private:
     Ui::MainWindow *ui;
@@ -44,9 +42,8 @@ private:
     QVector <LDMDevice*> devices;
     ConnectionPanel *m_connectionPanel;
     Console *m_console;
-    QMap<int,bool> connectionStatuses;
-    int m_counDevices=2;
-
+    int currentCountDev=1;
+    int connectedDevices = 0;
 
 };
 #endif // MAINWINDOW_H

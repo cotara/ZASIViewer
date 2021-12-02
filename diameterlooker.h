@@ -14,7 +14,7 @@ class diameterLooker : public Looker
 
 public:
     explicit diameterLooker(QWidget *parent = nullptr, int diam = 5, int num=0);
-    ~diameterLooker();
+    virtual ~diameterLooker();
 
     virtual void setModel(int diam);
     virtual void rePaint();

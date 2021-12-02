@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QPushButton>
+#include <QPropertyAnimation>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainWindow){
     ui->setupUi(this);
@@ -9,36 +10,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     devicesLayout = new QHBoxLayout();
     VLayout = new QVBoxLayout();
     centralWidget()->setLayout(HLayout);
-
+    //Панель подключения
     m_connectionPanel = new ConnectionPanel(this);
-
+    //Консоль
     m_console = new Console(this);
     m_console->setMaximumHeight(300);
     ui->actionconsoleOn->setChecked(false);
     connect(m_connectionPanel,&ConnectionPanel::clearConsole,this,&MainWindow::clearConsole);
-
-    //Создаем девайсы
-    devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(0),m_connectionPanel->getPort(0),m_connectionPanel->getServer(0),ui->actiontcp_com));
-    connectionStatuses.insert(m_connectionPanel->getServer(0),false);
-    for (int i=1;i<m_counDevices;i++){
-        if(ui->actiontcp_com)//tcp mode
-            devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(i),m_connectionPanel->getPort(i),m_connectionPanel->getServer(i),ui->actiontcp_com));
-        else
-            devices.append(new LDMDevice(this,devices[0]->getModbusClient(),m_connectionPanel->getServer(i),ui->actiontcp_com));
-        connectionStatuses.insert(m_connectionPanel->getServer(i),false);
-    }
-
-
-    m_statusBar = new StatusBar(ui->statusbar);
-
+    //Добавление виджетов
     HLayout->addLayout(VLayout);
     HLayout->addWidget(m_connectionPanel);
     VLayout->addLayout(devicesLayout);
     VLayout->addWidget(m_console);
-    for(LDMDevice* i: devices){
-        devicesLayout->addWidget(i);
-    }
 
+        //Создаем девайсы
+    devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::LDM));
+    devicesLayout->addWidget(devices.at(0));
+    m_statusBar = new StatusBar(ui->statusbar);
 
     connect(m_connectionPanel,&ConnectionPanel::connectionPushed,this,&MainWindow::connectionPushed);//Когда нажата кнопка пробуем подл/откл
     connect(m_connectionPanel,&ConnectionPanel::serverChanged,[=](int numDev, int serverAdd){devices[numDev]->setServer(serverAdd);});//Изменился сервер
@@ -46,13 +34,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     connect(m_connectionPanel,&ConnectionPanel::ipAdd_compChanged,[=](int numDev, const QString & ipAdd){devices[numDev]->setIpAdd_comp(ipAdd);});
     connect(m_connectionPanel,&ConnectionPanel::port_boudChanged,[=](int numDev, int port){devices[numDev]->setPort_boud(port);});
 
-    for (LDMDevice* i:devices){
-        connect(i,&LDMDevice::connectionStatus,this,&MainWindow::connectionChanged);                   //Состояние соединения изменилось
-        connect(i,&LDMDevice::errorOccured, this,&MainWindow::connectionFailed);                       //Сообщение об ошибке
-        connect(i,&LDMDevice::modbusRequestSent,this,&MainWindow::modbusPacketPrint);                     //Печатаем запрос
-        connect(i,&LDMDevice::modbusDataReceved,this,&MainWindow::modbusPacketPrint);               //Пришли данные по modbus
-     }
-
+    connectNewDevice(devices[0]);
 
     addToolBar(Qt::RightToolBarArea, ui->toolBar);//Перемещаем тулбарнаправо
 
@@ -68,21 +50,15 @@ MainWindow::~MainWindow()
     delete m_console;
 }
 
+void MainWindow::connectNewDevice(LDMDevice *dev){
+    connect(dev,&LDMDevice::connectionStatus,this,&MainWindow::connectionChanged);                   //Состояние соединения изменилось
+    connect(dev,&LDMDevice::errorOccured, this,&MainWindow::connectionFailed);                       //Сообщение об ошибке
+    connect(dev,&LDMDevice::modbusRequestSent,this,&MainWindow::modbusPacketPrint);                //Печатаем запрос
+    connect(dev,&LDMDevice::modbusDataReceved,this,&MainWindow::modbusPacketPrint);               //Пришли данные по modbus
+}
+
 void MainWindow::connectionChanged(int server, int status,const QString &host){
     QString str;
-    //Проверяем, есть ли в мапе такой сервер и меняем ему статуст
-    if(connectionStatuses.contains(server))
-        connectionStatuses[server] = status;
-
-    //Включаем/Отключаем лукеры
-    for(LDMDevice* i:devices){
-        if(i->getServer() == server){
-            if(status == 0)
-                i->setLookerEnabled(false);
-            else if(status == 2)
-                i->setLookerEnabled(true);
-        }
-    }
 
     switch(status){
         case 0:   //Отключено
@@ -90,7 +66,7 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
             m_statusBar->setMessageBar(str);            
             m_connectionPanel->setStatusLabel(server,false);
             m_console->putData(str.toUtf8());
-
+            connectedDevices--;
             break;
         case 1:    //Подключение
            str = "Подключение к " + host + "\n";
@@ -104,6 +80,7 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
             m_connectionPanel->setStatusLabel(server,true);
             m_console->putData(str.toUtf8());
             ui->actiondoubleMode->setEnabled(false);
+            connectedDevices++;
             break;
         case 3:       //Отключение
             str = "Отключение от " + host + "\n";
@@ -112,15 +89,12 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
             ui->actiondoubleMode->setEnabled(false);
             break;
     }
-    int statuses =0;
-    for(auto  i:connectionStatuses.keys()){
-         statuses+=connectionStatuses.value(i);
-    }
-    if(statuses == 0){//Все отключились
+
+    if(connectedDevices==0){//Все устройства отключились
         ui->actiondoubleMode->setEnabled(true);
         m_connectionPanel->connectionChanged(0);
     }
-    else if(statuses == connectionStatuses.size()){//Все подключились
+    else if(connectedDevices == currentCountDev){//Все подключились
         ui->actiondoubleMode->setEnabled(false);
         m_connectionPanel->connectionChanged(1);
     }
@@ -128,8 +102,6 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
         ui->actiondoubleMode->setEnabled(false);
         m_connectionPanel->connectionChanged(2);
     }
-
-
 }
 
 void MainWindow::connectionFailed( const QString &msg){
@@ -173,13 +145,53 @@ void MainWindow::on_actionsettingsOn_toggled(bool arg1){
 //Переключение tcp|COM
 void MainWindow::on_actiontcp_com_toggled(bool arg1){
     m_connectionPanel->setInterface(arg1);
-    //!!!!!!!
+    //При смене типа надо заново создавать все устройства, поскольку в конструкторе передаются все нужные параметры (адреса, скорости и прочее
+
+    for(LDMDevice * i: devices){
+        devicesLayout->removeWidget(i);
+        delete i;
+    }
+
+    devices.clear();
+    if(arg1 == Tcp){
+        for(int i =0;i<currentCountDev;i++){
+            devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(i),m_connectionPanel->getPort(i),m_connectionPanel->getServer(i),ConnectionType::Tcp,m_connectionPanel->getModel(i),DeviceType::LDM));
+            devicesLayout->addWidget(devices.at(i));
+            connectNewDevice(devices.at(i));
+        }
+    }
+    else{
+        devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::LDM));
+        devicesLayout->addWidget(devices.at(0));
+        connectNewDevice(0);
+        for( int i = 1; i<currentCountDev;i++){
+            devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(i),ConnectionType::Serial,m_connectionPanel->getModel(i),DeviceType::LDM));
+            devicesLayout->addWidget(devices.at(i));
+            connectNewDevice(devices.at(i));
+        }
+    }
 }
 
 //Переключение 1-2 устройства
 void MainWindow::on_actiondoubleMode_toggled(bool arg1){
     m_connectionPanel->setDoubleMode(arg1);
-    m_modbusClient->setDoubleMode(arg1);
-    m_looker->enableSecondLooker(arg1);
+
+    if(arg1){//Если надо добавить второго
+        if(ui->actiontcp_com->isChecked())//tcp mode
+            devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(1),m_connectionPanel->getPort(1),m_connectionPanel->getServer(1),ConnectionType::Tcp,m_connectionPanel->getModel(1),DeviceType::LDM));
+        else
+            devices.append(new LDMDevice(this,devices[0]->getModbusClient(),m_connectionPanel->getServer(1),ConnectionType::Serial,m_connectionPanel->getModel(1),DeviceType::LDM));
+
+        connectNewDevice(devices[1]);
+        devicesLayout->addWidget(devices.at(1));
+        currentCountDev++;
+    }
+    else{
+        devicesLayout->removeWidget(devices.at(1));
+        currentCountDev--;
+        delete devices.at(1);
+        devices.remove(1);
+    }
 }
+
 

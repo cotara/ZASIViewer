@@ -30,7 +30,7 @@ public:
     ~LDMDevice();
     QModbusClient* getModbusClient();
 public slots:
-    void connectionTypeChanged(bool type);
+    void createNewClien(QModbusClient *client,bool type);
     void onConnect();
     void onDisconnect();
     void setServer(int serverAdd);
@@ -41,8 +41,8 @@ public slots:
     void setLookerEnabled(bool state);
 private:
     QVBoxLayout *VLayout;
-    QModbusClient *m_ModbusClient;
-    Looker *m_looker;
+    QModbusClient *m_ModbusClient=nullptr;
+    Looker *m_looker=nullptr;
     QTimer *m_timer =nullptr;
     QString m_ipAdd_comp;
     int m_port_boud;
@@ -50,7 +50,8 @@ private:
     bool m_type=Serial;
     int m_model;
     QVector<unsigned short> modbusRegs;
-
+    bool isMaster = false;//Переменная, указывающая на то, что это главное устройство из всех, созданных.
+    //Это важно для Serial, т.к. удалять можно только m_ModbusClient, т.к. он общий
 
 private slots:
     void onModbusStateChanged(int state);

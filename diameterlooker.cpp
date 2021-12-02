@@ -3,14 +3,11 @@
 
 diameterLooker::diameterLooker(QWidget *parent,int diam, int num) : Looker(parent,num), ui(new Ui::diameterLooker),m_diam(diam)
 {
-
     ui->setupUi(this);
 
     m_centerViewer = new centerViewer(this,m_diam);
     ui->HLayout->addWidget(m_centerViewer);
-    QPalette palette;
-    palette.setColor(QPalette::WindowText,Qt::red);
-    ui->lcdNumber->setPalette(palette);
+    setEnabled(false);
 }
 
 diameterLooker::~diameterLooker()
@@ -30,9 +27,9 @@ void diameterLooker::rePaint()
     ui->lcdNumber->display(m_data.at(0));//Основной диаметр
     ui->lcdNumber_2->display(m_data.at(1));//х Диаметр
     ui->lcdNumber_3->display(m_data.at(2));//y Диаметр
-    m_centerViewer->setCoord(m_data.at(3),m_data.at(4));   //Размер и положение
-    m_centerViewer->setRad(m_data.at(1),m_data.at(2));
-    setError(m_data.at(5));
+    //m_centerViewer->setCoord(m_data.at(3),m_data.at(4));   //Размер и положение
+    //m_centerViewer->setRad(m_data.at(1),m_data.at(2));
+    //setError(m_data.at(5));
 }
 
 

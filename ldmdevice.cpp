@@ -5,6 +5,7 @@
 
 LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int server, bool type,int model,int deviceType)
     : QWidget(parent), m_ipAdd_comp(ipAdd),m_port_boud(port),m_server(server),m_type(type),m_model(model){
+
     m_timer = new QTimer(this);
     m_timer->setInterval(500);
     connect(m_timer,&QTimer::timeout,this,&LDMDevice::handlerTimer);
@@ -12,8 +13,11 @@ LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int serve
     if(deviceType == LDM){
         m_looker = new diameterLooker(this,m_model,m_server);
     }
+    createNewClien(nullptr, type);//Создаем нового клиента с коннектами
+
     VLayout = new QVBoxLayout(this);
     VLayout->addWidget(m_looker);
+    isMaster = true;//т.к. это конструктор для главного устройства
 }
 
 LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, bool type,int model,int deviceType)
@@ -26,6 +30,8 @@ LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, boo
         m_port_boud = m_ModbusClient->connectionParameter(QModbusDevice::NetworkPortParameter).toInt();
         m_ipAdd_comp = m_ModbusClient->connectionParameter(QModbusDevice::NetworkAddressParameter).toInt();
     }
+    createNewClien(m_ModbusClient, type);//Дублируем клиента и коннектим к нему слоты
+
     m_timer = new QTimer(this);
     m_timer->setInterval(500);
     connect(m_timer,&QTimer::timeout,this,&LDMDevice::handlerTimer);
@@ -34,36 +40,49 @@ LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, boo
     }
     VLayout = new QVBoxLayout(this);
     VLayout->addWidget(m_looker);
+    isMaster = false;//т.к. это конструктор для ведомого
 }
 
 LDMDevice::~LDMDevice()
 {
-    if (m_ModbusClient)
+    if(isMaster && m_ModbusClient){//Удаляем только данные по указателю мастера
         m_ModbusClient->disconnectDevice();
-    delete m_ModbusClient;
+        delete m_ModbusClient;
+        m_ModbusClient = nullptr;
+    }
     delete m_timer;
+    delete m_looker;
+    delete VLayout;
+
 }
 
 QModbusClient *LDMDevice::getModbusClient(){
     return m_ModbusClient;
 }
 
-//Изменен тип подключениея COM-0/TCP-1
-void LDMDevice::connectionTypeChanged(bool type){
-    m_ModbusClient->disconnectDevice();
-    delete m_ModbusClient;
+//Изменение типа устройства путем пересоздания клиента (Serial|TCP)
+//Если нужно устройство со своим отдельным клиентом, как в TCP, то client должен быть равен nullptr
 
-    m_type = type;                                                      //Сохраняем тип текущего соединения
-    if (m_type == Serial)
-        m_ModbusClient = new QModbusRtuSerialMaster(this);
-    else if (m_type == Tcp)
-        m_ModbusClient = new QModbusTcpClient(this);
+void LDMDevice::createNewClien(QModbusClient *client, bool type){
+
+    m_type = type; //Сохраняем тип текущего соединения
+
+    if(client == nullptr){//Выделяем память для нового клиента
+        if (m_type == Serial)
+            m_ModbusClient = new QModbusRtuSerialMaster(this);
+        else if (m_type == Tcp)
+            m_ModbusClient = new QModbusTcpClient(this);
+        isMaster = true;
+    }
+    else{
+        m_ModbusClient = client;//Иначе получаем устройство с клиентом дубликатом
+        isMaster = false;
+    }
 
 
     if(!m_ModbusClient){//Если память не выделилась
         if (m_type == Serial)
             emit errorOccured("Could not create QModbusRtuSerialMaster");
-
         else if (m_type == Tcp)
             emit errorOccured("Could not create QModbusTcpClient");
         m_looker->setEnabled(false);
@@ -76,7 +95,6 @@ void LDMDevice::connectionTypeChanged(bool type){
         });
     }
 }
-
 
 //Подключение
 void LDMDevice::onConnect(){
@@ -194,8 +212,8 @@ void LDMDevice::modbusDataProcessing(){
         doubleData.append((modbusRegs.at(3)+65536*modbusRegs.at(2))/1000.0);
         doubleData.append((modbusRegs.at(5)+65536*modbusRegs.at(4))/1000.0);
         doubleData.append((60000-modbusRegs.at(9)-65536*modbusRegs.at(8))/1000.0);
-        doubleData.append((60000-modbusRegs.at(11)-65536*modbusRegs.at(10))/1000.0);
-        doubleData.append((modbusRegs.at(13)+65536*modbusRegs.at(12)));
+        //doubleData.append((60000-modbusRegs.at(11)-65536*modbusRegs.at(10))/1000.0);
+        //doubleData.append((modbusRegs.at(13)+65536*modbusRegs.at(12)));
         m_looker->setData(doubleData);
     }
     else{
@@ -207,9 +225,9 @@ QModbusDataUnit LDMDevice::readRequest() const
 {
     const auto table = static_cast<QModbusDataUnit::RegisterType>(QModbusDataUnit::HoldingRegisters);
 
-    int startAddress = 16;
+    int startAddress = 0;
 
-    quint16 numberOfEntries = 22;
+    quint16 numberOfEntries = 10;
     return QModbusDataUnit(table, startAddress, numberOfEntries);
 }
 
@@ -234,3 +252,5 @@ void LDMDevice::setModel(int model){
 void LDMDevice::setLookerEnabled(bool state){
     m_looker->setEnabled(state);
 }
+
+

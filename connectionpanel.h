@@ -21,7 +21,9 @@ public:
     QString getIpAdd(int number);
     int getPort(int number);
     int getServer(int number);
-    int getDiam(int number);
+    int getModel(int number);
+    QString getComport();
+    int getBaud();
     void setInterface(bool type){m_interface = type;interfaceSwitch(m_interface);}
     void setDoubleMode(bool mode){m_doubleMode = mode;oneTwoChange(m_doubleMode);}
 public slots:

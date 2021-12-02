@@ -60,6 +60,9 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     ui->diamSpinBox2->setValue(50);
 
     connect(ui->clearButton,&QPushButton::clicked,this,&ConnectionPanel::clearConsole);
+    oneTwoChange(false);//Отображаем настройки для одного устройства
+    setStatusLabel(ui->deviceNumLine->text().toInt(),false);    //Текущий статус первого
+    setStatusLabel(ui->deviceNumLine2->text().toInt(),false);   //Текущий статус второго
 }
 
 ConnectionPanel::~ConnectionPanel(){
@@ -94,7 +97,7 @@ int ConnectionPanel::getServer(int number){
         return -1;
 }
 
-int ConnectionPanel::getDiam(int number)
+int ConnectionPanel::getModel(int number)
 {
     if(number==0)
         return ui->diamSpinBox1->value();
@@ -102,6 +105,14 @@ int ConnectionPanel::getDiam(int number)
         return ui->diamSpinBox2->value();
     else
         return -1;
+}
+
+QString ConnectionPanel::getComport(){
+    return ui->portsBox->currentText();
+}
+
+int ConnectionPanel::getBaud(){
+    return ui->spdBox->currentText().toInt();
 }
 //Изменение кнопки при изменении подключения
 void ConnectionPanel::connectionChanged(int state)
@@ -116,9 +127,11 @@ void ConnectionPanel::connectionChanged(int state)
             ui->connectButton->setText("Отключиться");
             ui->connectButton->setEnabled(true);
             elementsEnable(false);
+            break;
         case 2:     //Подключено//Отключение
             ui->connectButton->setEnabled(false);
             elementsEnable(false);
+            break;
     }
 }
 
@@ -182,6 +195,22 @@ void ConnectionPanel::interfaceSwitch(bool type){
         ui->dscrLabel->setVisible(!type);
         ui->SpdLabel->setVisible(!type);
         ui->spdBox->setVisible(!type);
+
+        oneTwoChange(m_doubleMode);//В случае переключения на TCP
+}
+//Переключение режимов 1-2 устройства
+void ConnectionPanel::oneTwoChange(int arg1){
+    if(m_interface){//Если текущий режим - tcp
+        ui->IPlabel2->setVisible(arg1);
+        ui->ipAdd2->setVisible(arg1);
+        ui->portLabel2->setVisible(arg1);
+        ui->port2->setVisible(arg1);
+    }
+
+    ui->deviceNumLine2->setVisible(arg1);
+    ui->statusLabel2->setVisible(arg1);
+    ui->diamSpinBox2->setVisible(arg1);
+    ui->ldm2_label->setVisible(arg1);
 }
 
 void ConnectionPanel::setStatusLabel(int server, bool state){
@@ -208,19 +237,7 @@ void ConnectionPanel::setStatusLabel(int server, bool state){
     }
 
 }
-//Переключение режимов 1-2 устройства
-void ConnectionPanel::oneTwoChange(int arg1){
-    if(m_interface){//Если текущий режим - tcp
-        ui->IPlabel2->setVisible(arg1);
-        ui->ipAdd2->setVisible(arg1);
-        ui->portLabel2->setVisible(arg1);
-        ui->port2->setVisible(arg1);
-    }
 
-    ui->deviceNumLine2->setVisible(arg1);
-    ui->diamSpinBox2->setVisible(arg1);
-    ui->ldm2_label->setVisible(arg1);
-}
 
 void ConnectionPanel::elementsEnable(bool state){
     emit doubleButtonBlock(state);
