@@ -6,14 +6,22 @@ diameterLooker::diameterLooker(QWidget *parent,int diam, int num) : Looker(paren
     ui->setupUi(this);
 
     m_centerViewer = new centerViewer(this,m_diam);
+    diameterPlot = new QCustomPlot(this);
+    diameterPlot->addGraph();
+    diameterPlot->setMinimumHeight(200);
     ui->HLayout->addWidget(m_centerViewer);
+    ui->VLayout->addWidget(diameterPlot);
+
+
     setEnabled(false);
+
 }
 
 diameterLooker::~diameterLooker()
 {
     delete ui;
     delete m_centerViewer;
+    delete diameterPlot;
 }
 
 void diameterLooker::setModel(int diam){
@@ -29,7 +37,18 @@ void diameterLooker::rePaint()
     ui->lcdNumber_3->display(m_data.at(2));//y Диаметр
     //m_centerViewer->setCoord(m_data.at(3),m_data.at(4));   //Размер и положение
     //m_centerViewer->setRad(m_data.at(1),m_data.at(2));
-    //setError(m_data.at(5));
+    if(1){//m_data.at(5) == 0){//Только если не пришла ошибка, добавляем данные на график. Иначе, будет пустое место
+        m_diameters.append(m_data.at(0));
+        xDiameters.append(packetCounter++);
+        if(m_diameters.size()>100){
+            m_diameters.removeFirst();
+            xDiameters.removeFirst();
+        }
+        setGraphData();
+    }
+    //else
+     //   setError(m_data.at(5));
+
 }
 
 
@@ -57,15 +76,28 @@ void diameterLooker::setError(int error){
                default: error_message = tr("Неизвестная ошибка"); break;
       }
      ui->label->setText(error_message);
+     QPalette palette;
      if(error!=0){
-         ui->lcdNumber->setPalette(Qt::red);
-         ui->lcdNumber_2->setPalette(Qt::red);
-         ui->lcdNumber_3->setPalette(Qt::red);
+         palette.setColor(QPalette::WindowText,Qt::red);
+        ui->lcdNumber->display("-");
+        ui->lcdNumber_2->display("-");
+        ui->lcdNumber_3->display("-");
+     }
+     else
+         palette.setColor(QPalette::WindowText,Qt::black);
 
-     }
-     else{
-         ui->lcdNumber->setPalette(Qt::black);
-         ui->lcdNumber_2->setPalette(Qt::black);
-         ui->lcdNumber_3->setPalette(Qt::black);
-     }
+     ui->lcdNumber->setPalette(palette);
+     ui->lcdNumber_2->setPalette(palette);
+     ui->lcdNumber_3->setPalette(palette);
+}
+
+void diameterLooker::setGraphData(){
+    diameterPlot->graph()->setData(xDiameters,m_diameters);
+    diameterPlot->xAxis->rescale();
+    diameterPlot->yAxis->rescale();
+
+    diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, 100, Qt::AlignRight);
+    diameterPlot->yAxis->setRangeLower(0);
+    //diameterPlot->yAxis->setRange(diameterPlot->yAxis->range().lower, 0, Qt::AlignRight);
+    diameterPlot->replot();
 }

@@ -42,8 +42,8 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     connect(ui->deviceNumLine,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(0,i);});
     connect(ui->deviceNumLine2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(1,i);});
     //Изменилась модель
-    connect(ui->diamSpinBox1,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(0,i);});
-    connect(ui->diamSpinBox2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit modelChanged(1,i);});
+    connect(ui->diamBox1,&QComboBox::currentTextChanged,[=](const QString &text){ emit modelChanged(0,text.toInt());});
+    connect(ui->diamBox2,&QComboBox::currentTextChanged,[=](const QString &text){ emit modelChanged(1,text.toInt());});
     //Изменился айпи или номер компорта
     connect(ui->ipAdd,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(0,ipAdd_comp);});
     connect(ui->ipAdd2,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(1,ipAdd_comp);});
@@ -56,19 +56,24 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     ui->deviceNumLine->setValue(1);
     ui->deviceNumLine2->setValue(2);
 
-    ui->diamSpinBox1->setValue(50);
-    ui->diamSpinBox2->setValue(50);
+    QList<QString> models{"20","40","50","120"};
+    ui->diamBox1->addItems(models);
+    ui->diamBox2->addItems(models);
 
     connect(ui->clearButton,&QPushButton::clicked,this,&ConnectionPanel::clearConsole);
     oneTwoChange(false);//Отображаем настройки для одного устройства
     setStatusLabel(ui->deviceNumLine->text().toInt(),false);    //Текущий статус первого
     setStatusLabel(ui->deviceNumLine2->text().toInt(),false);   //Текущий статус второго
+    ui->clearButton->setVisible(false);
 }
 
 ConnectionPanel::~ConnectionPanel(){
     delete ui;
 }
 
+void ConnectionPanel::enableClearConsoleButton(bool state){
+    ui->clearButton->setVisible(state);
+}
 
 QString ConnectionPanel::getIpAdd(int number){
     if(number==0)
@@ -100,9 +105,9 @@ int ConnectionPanel::getServer(int number){
 int ConnectionPanel::getModel(int number)
 {
     if(number==0)
-        return ui->diamSpinBox1->value();
+        return ui->diamBox1->currentText().toInt();
     else if(number==1)
-        return ui->diamSpinBox2->value();
+        return ui->diamBox2->currentText().toInt();
     else
         return -1;
 }
@@ -114,6 +119,42 @@ QString ConnectionPanel::getComport(){
 int ConnectionPanel::getBaud(){
     return ui->spdBox->currentText().toInt();
 }
+
+void ConnectionPanel::setIP(int numDev, const QString &ip){
+    if(numDev==0)
+        ui->ipAdd->setText(ip);
+    else if(numDev==1)
+        ui->ipAdd2->setText(ip);
+}
+
+void ConnectionPanel::setPort(int numDev, int port){
+    if(numDev==0)
+        ui->port->setText(QString::number(port));
+    else if(numDev==1)
+        ui->port2->setText(QString::number(port));
+}
+
+void ConnectionPanel::setComport(const QString &comport){
+        ui->portsBox->setCurrentText(comport);
+}
+
+void ConnectionPanel::setBaudrate(int baudrate){
+    ui->spdBox->setCurrentText(QString::number(baudrate));
+}
+
+void ConnectionPanel::setModel(int numDev, int model){
+    if(numDev==0)
+        ui->diamBox1->setCurrentText(QString::number(model));
+    else if(numDev==1)
+        ui->diamBox2->setCurrentText(QString::number(model));
+}
+
+void ConnectionPanel::setServer(int numDev, int server){
+    if(numDev==0)
+        ui->deviceNumLine->setValue(server);
+    else if(numDev==1)
+        ui->deviceNumLine2->setValue(server);
+}
 //Изменение кнопки при изменении подключения
 void ConnectionPanel::connectionChanged(int state)
 {
@@ -123,13 +164,13 @@ void ConnectionPanel::connectionChanged(int state)
             ui->connectButton->setEnabled(true);
             elementsEnable(true);
             break;
-        case 1:    //Подключение
+        case 1:    //Подключено
             ui->connectButton->setText("Отключиться");
             ui->connectButton->setEnabled(true);
             elementsEnable(false);
             break;
-        case 2:     //Подключено//Отключение
-            ui->connectButton->setEnabled(false);
+        case 2:     //Подключение//Отключение
+            ui->connectButton->setEnabled(false);//??? Как быть, ведь если одно устройство отвалилось, то я не могу нажать коннект
             elementsEnable(false);
             break;
     }
@@ -207,10 +248,7 @@ void ConnectionPanel::oneTwoChange(int arg1){
         ui->port2->setVisible(arg1);
     }
 
-    ui->deviceNumLine2->setVisible(arg1);
-    ui->statusLabel2->setVisible(arg1);
-    ui->diamSpinBox2->setVisible(arg1);
-    ui->ldm2_label->setVisible(arg1);
+    ui->settings2Box->setVisible(arg1);
 }
 
 void ConnectionPanel::setStatusLabel(int server, bool state){

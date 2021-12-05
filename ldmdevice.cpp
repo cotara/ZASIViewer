@@ -24,11 +24,11 @@ LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, boo
     : QWidget(parent), m_ModbusClient(modbusClient), m_server(server),m_type(type),m_model(model){
     if(!type){
         m_port_boud = m_ModbusClient->connectionParameter(QModbusDevice::SerialBaudRateParameter).toInt();
-        m_ipAdd_comp = m_ModbusClient->connectionParameter(QModbusDevice::SerialPortNameParameter).toInt();
+        m_ipAdd_comp = m_ModbusClient->connectionParameter(QModbusDevice::SerialPortNameParameter).toString();
     }
     else{
         m_port_boud = m_ModbusClient->connectionParameter(QModbusDevice::NetworkPortParameter).toInt();
-        m_ipAdd_comp = m_ModbusClient->connectionParameter(QModbusDevice::NetworkAddressParameter).toInt();
+        m_ipAdd_comp = m_ModbusClient->connectionParameter(QModbusDevice::NetworkAddressParameter).toString();
     }
     createNewClien(m_ModbusClient, type);//Дублируем клиента и коннектим к нему слоты
 
@@ -105,6 +105,7 @@ void LDMDevice::onConnect(){
     }
 
     if (m_ModbusClient->state() != QModbusDevice::ConnectedState) {
+
         if (m_type == Serial) {
                 m_ModbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter,m_ipAdd_comp);
                 m_ModbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, m_port_boud);
@@ -116,6 +117,7 @@ void LDMDevice::onConnect(){
             m_ModbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter, m_port_boud);
             m_ModbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, m_ipAdd_comp);
         }
+
         m_ModbusClient->setTimeout(100);
         m_ModbusClient->setNumberOfRetries(2);
         m_ModbusClient->connectDevice();
@@ -202,7 +204,7 @@ void LDMDevice::modbusDataProcessing(){
         str+=QString::number(i) + " ";
     str+="\n";
 
-    modbusDataReceved(m_server, str);
+    emit modbusDataReceved(m_server, str);
 
     QVector<double> doubleData, tempData;
 
@@ -211,7 +213,7 @@ void LDMDevice::modbusDataProcessing(){
         doubleData.append((modbusRegs.at(1)+65536*modbusRegs.at(0))/1000.0);
         doubleData.append((modbusRegs.at(3)+65536*modbusRegs.at(2))/1000.0);
         doubleData.append((modbusRegs.at(5)+65536*modbusRegs.at(4))/1000.0);
-        doubleData.append((60000-modbusRegs.at(9)-65536*modbusRegs.at(8))/1000.0);
+        //doubleData.append((60000-modbusRegs.at(9)-65536*modbusRegs.at(8))/1000.0);
         //doubleData.append((60000-modbusRegs.at(11)-65536*modbusRegs.at(10))/1000.0);
         //doubleData.append((modbusRegs.at(13)+65536*modbusRegs.at(12)));
         m_looker->setData(doubleData);

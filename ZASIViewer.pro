@@ -1,4 +1,4 @@
-QT       += core gui serialport network serialbus
+QT       += core gui serialport network serialbus printsupport
 
 VERSION = 1.0
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -22,6 +22,7 @@ SOURCES += \
     looker.cpp \
     main.cpp \
     mainwindow.cpp \
+    qcustomplot.cpp \
     statusbar.cpp
 
 HEADERS += \
@@ -32,6 +33,7 @@ HEADERS += \
     ldmdevice.h \
     looker.h \
     mainwindow.h \
+    qcustomplot.h \
     statusbar.h
 
 FORMS += \

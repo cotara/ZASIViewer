@@ -3,6 +3,7 @@
 
 #include "looker.h"
 #include "centerviewer.h"
+#include "qcustomplot.h"
 
 namespace Ui {
 class diameterLooker;
@@ -18,11 +19,17 @@ public:
 
     virtual void setModel(int diam);
     virtual void rePaint();
+
 private:
     Ui::diameterLooker *ui;
     int m_diam;//Диаметр прибора
     centerViewer *m_centerViewer; 
     void setError(int error);
+    QCustomPlot *diameterPlot;
+    void setGraphData();
+    QVector <double> m_diameters;
+    QVector <double> xDiameters;
+    double packetCounter=0;
 
 };
 

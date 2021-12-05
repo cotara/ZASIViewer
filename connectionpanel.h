@@ -26,10 +26,18 @@ public:
     int getBaud();
     void setInterface(bool type){m_interface = type;interfaceSwitch(m_interface);}
     void setDoubleMode(bool mode){m_doubleMode = mode;oneTwoChange(m_doubleMode);}
+    void setIP(int numDev, const QString& ip);
+    void setPort(int numDev, int port);
+    void setComport(const QString& comport);
+    void setBaudrate(int baudrate);
+    void setModel(int numDev, int model);
+    void setServer(int numDev, int server);
+
 public slots:
     void connectionChanged(int state);
     void interfaceSwitch(bool type);
     void setStatusLabel(int server,bool state);
+    void enableClearConsoleButton(bool state);
 private slots:
     void on_portsBox_currentIndexChanged(int index);
     void on_updAvblPortsButt_clicked();
