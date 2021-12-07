@@ -48,9 +48,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     m_statusBar = new StatusBar(ui->statusbar);
 
     //Проверка был ли включен двойной режим необходмо делать после создания первого девайса, чтобы можно было добавить второй.
-    //on_actiondoubleMode_toggled();
+    if(settings.value("interfaceMode").toBool() == 0)//Проверяем тип девайсов
+        connectNewDevice(devices.at(0));            //Если Serial, просто вызываем коннекты
+    else
+        ui->actiontcp_com->setChecked(true);        //Иначе создаем нажимаем кнопку
+
     ui->actiondoubleMode->setChecked(settings.value("doubleMode").toBool());//Проверяем сколько девайсов было в настройках
-    ui->actiontcp_com->setChecked(settings.value("interfaceMode").toBool());//Проверяем тип девайсов
+
     settings.endGroup();
 
     connect(m_connectionPanel,&ConnectionPanel::connectionPushed,this,&MainWindow::connectionPushed);//Когда нажата кнопка пробуем подл/откл
@@ -58,8 +62,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     connect(m_connectionPanel,&ConnectionPanel::modelChanged,[=](int numDev, int model){ devices[numDev]->setModel(model);});
     connect(m_connectionPanel,&ConnectionPanel::ipAdd_compChanged,[=](int numDev, const QString & ipAdd){ devices[numDev]->setIpAdd_comp(ipAdd);});
     connect(m_connectionPanel,&ConnectionPanel::port_boudChanged,[=](int numDev, int port){ devices[numDev]->setPort_boud(port);});
-
-    connectNewDevice(devices[0]);
 
     addToolBar(Qt::RightToolBarArea, ui->toolBar);//Перемещаем тулбарнаправо
 
@@ -115,43 +117,75 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
             m_statusBar->setMessageBar(str);            
             m_connectionPanel->setStatusLabel(server,false);
             m_console->putData(str.toUtf8());
-            connectedDevices--;
             break;
         case 1:    //Подключение
            str = "Подключение к " + host + "\n";
            m_statusBar->setMessageBar(str);
            m_console->putData(str.toUtf8());
            ui->actiondoubleMode->setEnabled(false);
-           connectedDevices++;
-        break;
+           break;
         case 2:     //Подключено
             str = "Подключено к " + host + "\n";
             m_statusBar->setMessageBar(str);            
             m_connectionPanel->setStatusLabel(server,true);
             m_console->putData(str.toUtf8());
             ui->actiondoubleMode->setEnabled(false);
-            connectedDevices++;
             break;
         case 3:       //Отключение
             str = "Отключение от " + host + "\n";
             m_statusBar->setMessageBar(str);
             m_console->putData(str.toUtf8());
             ui->actiondoubleMode->setEnabled(false);
-            connectedDevices--;
             break;
     }
 
-    if(connectedDevices==0){//Все устройства отключились
-        ui->actiondoubleMode->setEnabled(true);
-        m_connectionPanel->connectionChanged(0);
+    //Если в мапе нет сервера, создаем его и записываем его состояние
+    //Если в мапе есть этот сервер, то изменяем его состояние
+    if(!connectionState.contains(server))
+        connectionState.insert(server,status);
+    else
+        connectionState[server] = status;
+
+    connectedDevices = 0;
+    connectingDevice=0;
+    //Считаем сколько и каких у нас устройств
+    for(auto e : connectionState.keys()){
+      if(connectionState.value(e) == 2)
+          connectedDevices++;
+      else if(connectionState.value(e) == 1 || connectionState.value(e) == 3)
+          connectingDevice++;
     }
-    else if(connectedDevices == currentCountDev){//Все подключились
-        ui->actiondoubleMode->setEnabled(false);
-        m_connectionPanel->connectionChanged(1);
+
+
+    if(connectedDevices==0){//Нет подключеных устройств
+        if(connectingDevice==0){//Нет подключающихся устройств
+            connectionState.clear(); //Когда все устройста отключены, чистим мап, потому что сервера могут поменяться
+            ui->actiondoubleMode->setEnabled(true);
+            ui->actiontcp_com->setEnabled(true);
+            m_connectionPanel->connectionButtonChanged(true,0);//ПОДКЛЮЧИТЬСЯ вкл
+            m_connectionPanel->enablePanel(true);              //панель вкл
+
+        }
+        else{//Процесс подключения отключения отключения/подключения
+            ui->actiondoubleMode->setEnabled(false);
+            ui->actiontcp_com->setEnabled(false);
+            m_connectionPanel->connectionButtonChanged(false,2);//Текст не менять выкл
+            m_connectionPanel->enablePanel(false);              //панель выкл
+        }
     }
-    else{//Происходит процесс подключения
+    else{
         ui->actiondoubleMode->setEnabled(false);
-        m_connectionPanel->connectionChanged(2);
+        ui->actiontcp_com->setEnabled(false);
+        m_connectionPanel->enablePanel(false);                  //панель выкл
+        if(connectedDevices == currentCountDev){                //Все подключились
+            m_connectionPanel->connectionButtonChanged(true,1);     //ОТКЛЮЧИТЬСЯ вкл
+        }
+        else{                                                   //Не все существующие устройства подключены
+            if(connectingDevice==0)                                 //Нет подключающихся устройств
+                m_connectionPanel->connectionButtonChanged(true,1);     //ОТКЛЮЧИТЬСЯ вкл
+            else                                                    //Процесс подключения отключения отключения/подключения
+                m_connectionPanel->connectionButtonChanged(false,2);    //Текст не менять выкл
+        }
     }
 }
 
@@ -200,6 +234,7 @@ void MainWindow::on_actiontcp_com_toggled(bool arg1){
     //При смене типа надо заново создавать все устройства, поскольку в конструкторе передаются все нужные параметры (адреса, скорости и прочее
 
     for(LDMDevice * i: devices){
+
         devicesLayout->removeWidget(i);
         delete i;
     }
@@ -215,7 +250,7 @@ void MainWindow::on_actiontcp_com_toggled(bool arg1){
     else{
         devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::LDM));
         devicesLayout->addWidget(devices.at(0));
-        connectNewDevice(0);
+        connectNewDevice(devices.at(0));
         for( int i = 1; i<currentCountDev;i++){
             devices.append(new LDMDevice(this,devices[0]->getModbusClient(),m_connectionPanel->getServer(i),ConnectionType::Serial,m_connectionPanel->getModel(i),DeviceType::LDM));
             devicesLayout->addWidget(devices.at(i));
@@ -223,6 +258,7 @@ void MainWindow::on_actiontcp_com_toggled(bool arg1){
         }
     }
 }
+
 
 //Переключение 1-2 устройства
 void MainWindow::on_actiondoubleMode_toggled(bool arg1){
@@ -247,5 +283,8 @@ void MainWindow::on_actiondoubleMode_toggled(bool arg1){
         }
     }
 }
+
+
+
 
 

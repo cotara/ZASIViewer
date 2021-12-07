@@ -43,6 +43,8 @@ LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, boo
     isMaster = false;//т.к. это конструктор для ведомого
 }
 
+
+
 LDMDevice::~LDMDevice()
 {
     if(isMaster && m_ModbusClient){//Удаляем только данные по указателю мастера
@@ -68,8 +70,12 @@ void LDMDevice::createNewClien(QModbusClient *client, bool type){
     m_type = type; //Сохраняем тип текущего соединения
 
     if(client == nullptr){//Выделяем память для нового клиента
-        if (m_type == Serial)
+        if (m_type == Serial){
             m_ModbusClient = new QModbusRtuSerialMaster(this);
+            // Эти две строки для того, чтобы конструктор ведомого Serial смог продублировать настройки
+            m_ModbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter,m_ipAdd_comp);
+            m_ModbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, m_port_boud);
+        }
         else if (m_type == Tcp)
             m_ModbusClient = new QModbusTcpClient(this);
         isMaster = true;
@@ -133,12 +139,14 @@ void LDMDevice::onModbusStateChanged(int state){
     switch(state){
         case QModbusDevice::UnconnectedState:   //Отключено
             emit connectionStatus(m_server,0,m_ipAdd_comp + ":" +QString::number(m_port_boud));
+            m_looker->setEnabled(false);
             m_timer->stop();
             break;
         case QModbusDevice::ConnectingState:    //Подключение
             emit connectionStatus(m_server,1,m_ipAdd_comp + ":" +QString::number(m_port_boud));break;
         case QModbusDevice::ConnectedState:     //Подключено
             emit connectionStatus(m_server,2,m_ipAdd_comp + ":" +QString::number(m_port_boud));
+            m_looker->setEnabled(true);
             m_timer->start();
             break;
         case QModbusDevice::ClosingState:       //Отключение

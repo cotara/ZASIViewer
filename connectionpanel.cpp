@@ -155,25 +155,18 @@ void ConnectionPanel::setServer(int numDev, int server){
     else if(numDev==1)
         ui->deviceNumLine2->setValue(server);
 }
-//Изменение кнопки при изменении подключения
-void ConnectionPanel::connectionChanged(int state)
+//Изменение состояния кнопки
+void ConnectionPanel::connectionButtonChanged(bool enabled, int text)
 {
-    switch(state){
-        case 0:   //Отключено
-            ui->connectButton->setText("Подключиться");
-            ui->connectButton->setEnabled(true);
-            elementsEnable(true);
-            break;
-        case 1:    //Подключено
-            ui->connectButton->setText("Отключиться");
-            ui->connectButton->setEnabled(true);
-            elementsEnable(false);
-            break;
-        case 2:     //Подключение//Отключение
-            ui->connectButton->setEnabled(false);//??? Как быть, ведь если одно устройство отвалилось, то я не могу нажать коннект
-            elementsEnable(false);
-            break;
+    ui->connectButton->setEnabled(enabled);
+    switch (text){
+        case 0: ui->connectButton->setText("Подключиться"); break;
+        case 1: ui->connectButton->setText("Отключиться"); break;
     }
+}
+//Изменение состояния панели
+void ConnectionPanel::enablePanel(bool enabled){
+    elementsEnable(enabled);
 }
 
 

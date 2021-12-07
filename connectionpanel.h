@@ -32,9 +32,10 @@ public:
     void setBaudrate(int baudrate);
     void setModel(int numDev, int model);
     void setServer(int numDev, int server);
+    void connectionButtonChanged(bool enabled,int text);
+    void enablePanel(bool enabled);
 
 public slots:
-    void connectionChanged(int state);
     void interfaceSwitch(bool type);
     void setStatusLabel(int server,bool state);
     void enableClearConsoleButton(bool state);

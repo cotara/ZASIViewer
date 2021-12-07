@@ -12,9 +12,7 @@ diameterLooker::diameterLooker(QWidget *parent,int diam, int num) : Looker(paren
     ui->HLayout->addWidget(m_centerViewer);
     ui->VLayout->addWidget(diameterPlot);
 
-
     setEnabled(false);
-
 }
 
 diameterLooker::~diameterLooker()
@@ -50,8 +48,6 @@ void diameterLooker::rePaint()
      //   setError(m_data.at(5));
 
 }
-
-
 
 void diameterLooker::setError(int error){
      QString error_message;

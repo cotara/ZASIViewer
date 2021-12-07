@@ -44,7 +44,9 @@ private:
     ConnectionPanel *m_connectionPanel;
     Console *m_console;
     int currentCountDev=1;
-    int connectedDevices = 0;
+    int connectedDevices = 0;//Количество устройств, подключенных
+    int connectingDevice = 0;//Количество устройств, находящихся в состоянии подключения/отключения
+    QMap <int, int> connectionState;
 
 };
 #endif // MAINWINDOW_H

@@ -30,10 +30,6 @@ void Looker::rePaint()
 
 }
 
-
-
-
-
 QVector<double> &Looker::data(){
     return m_data;
 }
