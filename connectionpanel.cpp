@@ -65,6 +65,7 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     setStatusLabel(ui->deviceNumLine->text().toInt(),false);    //Текущий статус первого
     setStatusLabel(ui->deviceNumLine2->text().toInt(),false);   //Текущий статус второго
     ui->clearButton->setVisible(false);
+
 }
 
 ConnectionPanel::~ConnectionPanel(){

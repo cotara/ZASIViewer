@@ -15,7 +15,7 @@ public:
     virtual ~Looker();
     QVector<double>& data();
 signals:
-
+    void onSetReg(int addr, int count, const QVector <unsigned short>& data);
 private:
      QVector <double> m_data;
      int m_devNum;

@@ -87,6 +87,7 @@ QSpinBox{
 }
 QSpinBox:disabled{
     color: #969696;
+    background-color: #F0F0F0;
 }
 QLineEdit{
     font-family: SFUIText-Bold;

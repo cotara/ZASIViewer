@@ -3,12 +3,13 @@
 
 #include <QWidget>
 #include <QVariant>
+#include <QVBoxLayout>
 #include <QSerialPort>
 #include <QModbusTcpClient>
 #include <QModbusRtuSerialMaster>
 #include <QMessageBox>
 #include <QTimer>
-#include "diameterlooker.h"
+#include "zasilooker.h"
 #include "looker.h"
 
 
@@ -33,12 +34,19 @@ public slots:
     void createNewClien(QModbusClient *client,bool type);
     void onConnect();
     void onDisconnect();
-    void setServer(int serverAdd);
-    void setIpAdd_comp(const QString& ipAdd_comp);
-    void setPort_boud(int port_boud);
-    void setModel(int model);
+    void setServer(int serverAdd){
+        m_server = serverAdd;
+        m_looker->setName(serverAdd);//меняем заголовок в лукере
+    }
+    void setIpAdd_comp(const QString& ipAdd_comp){
+        m_ipAdd_comp = ipAdd_comp;
+    }
+    void setPort_boud(int port_boud){
+        m_port_boud = port_boud;
+    }
+    void setModel(int model){ m_model = model; m_looker->setModel(model); }
     int getServer(){return m_server;};
-    void setLookerEnabled(bool state);
+    void setLookerEnabled(bool state){m_looker->setEnabled(state);};
 private:
     QVBoxLayout *VLayout;
     QModbusClient *m_ModbusClient=nullptr;
@@ -57,7 +65,9 @@ private slots:
     void onModbusStateChanged(int state);
     void handlerTimer();
     void onReadReady();
+    void setReg(int addr, int count,const QVector <unsigned short>& data);
     QModbusDataUnit readRequest() const;
+    QModbusDataUnit writeRequest(int addr, int count) const;
     void modbusDataProcessing();
 signals:
     void connectionStatus(int server, int status, const QString &host);

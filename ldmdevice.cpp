@@ -1,8 +1,5 @@
 #include "ldmdevice.h"
 
-
-
-
 LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int server, bool type,int model,int deviceType)
     : QWidget(parent), m_ipAdd_comp(ipAdd),m_port_boud(port),m_server(server),m_type(type),m_model(model){
 
@@ -11,13 +8,15 @@ LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int serve
     connect(m_timer,&QTimer::timeout,this,&LDMDevice::handlerTimer);
 
     if(deviceType == LDM){
-        m_looker = new diameterLooker(this,m_model,m_server);
+        m_looker = new ZasiLooker(this,m_model,m_server);
     }
     createNewClien(nullptr, type);//Создаем нового клиента с коннектами
 
     VLayout = new QVBoxLayout(this);
     VLayout->addWidget(m_looker);
     isMaster = true;//т.к. это конструктор для главного устройства
+    connect(m_looker,&ZasiLooker::onSetReg,this,&LDMDevice::setReg);
+
 }
 
 LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, bool type,int model,int deviceType)
@@ -36,7 +35,7 @@ LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, boo
     m_timer->setInterval(500);
     connect(m_timer,&QTimer::timeout,this,&LDMDevice::handlerTimer);
     if(deviceType == LDM){
-        m_looker = new diameterLooker(this,m_model,m_server);
+        m_looker = new ZasiLooker(this,m_model,m_server);
     }
     VLayout = new QVBoxLayout(this);
     VLayout->addWidget(m_looker);
@@ -204,6 +203,9 @@ void LDMDevice::onReadReady()
     reply->deleteLater();
 }
 
+
+
+
 //Обработчки данных, пришедших от устройства
 void LDMDevice::modbusDataProcessing(){
     QString str = "REPLY FROM " +  QString::number(m_server) + " DEV: ";
@@ -218,12 +220,8 @@ void LDMDevice::modbusDataProcessing(){
 
     if(modbusRegs.size()!=0){
         setLookerEnabled(true);
-        doubleData.append((modbusRegs.at(1)+65536*modbusRegs.at(0))/1000.0);
-        doubleData.append((modbusRegs.at(3)+65536*modbusRegs.at(2))/1000.0);
-        doubleData.append((modbusRegs.at(5)+65536*modbusRegs.at(4))/1000.0);
-        //doubleData.append((60000-modbusRegs.at(9)-65536*modbusRegs.at(8))/1000.0);
-        //doubleData.append((60000-modbusRegs.at(11)-65536*modbusRegs.at(10))/1000.0);
-        //doubleData.append((modbusRegs.at(13)+65536*modbusRegs.at(12)));
+        for(unsigned short i:modbusRegs)
+            doubleData.append(static_cast<double> (i));
         m_looker->setData(doubleData);
     }
     else{
@@ -241,26 +239,51 @@ QModbusDataUnit LDMDevice::readRequest() const
     return QModbusDataUnit(table, startAddress, numberOfEntries);
 }
 
-void LDMDevice::setServer(int serverAdd){
-    m_server = serverAdd;
-    m_looker->setName(serverAdd);//меняем заголовок в лукере
+
+//Хотим записать регистр
+void LDMDevice::setReg(int addr, int count, const QVector <unsigned short>& data)
+{
+    QModbusDataUnit writeUnit = writeRequest(addr,count);
+    for (int i = 0, total = int(writeUnit.valueCount()); i < total; ++i)
+         writeUnit.setValue(i, data.at(i));
+
+    if (auto *reply = m_ModbusClient->sendWriteRequest(writeUnit, m_server)) {
+        if (!reply->isFinished()) {
+            connect(reply, &QModbusReply::finished, this, [this, reply]() {
+                if (reply->error() == QModbusDevice::ProtocolError)
+                    emit errorOccured("Write response error (" + QString::number(reply->serverAddress()) + " DEV): "+ reply->errorString());
+                else if (reply->error() != QModbusDevice::NoError)
+                   emit errorOccured("Another Write error (" + QString::number(reply->serverAddress()) + " DEV): "+ reply->errorString());
+
+                reply->deleteLater();
+            });
+        }
+        else
+            reply->deleteLater();// broadcast replies return immediately
+    }
+    else
+        emit errorOccured("Устройство " + QString::number(reply->serverAddress()) + " : " + "Write error: " + m_ModbusClient->errorString());
 }
 
-void LDMDevice::setIpAdd_comp(const QString &ipAdd_comp){
-    m_ipAdd_comp = ipAdd_comp;
+
+QModbusDataUnit LDMDevice::writeRequest(int addr, int count) const
+{
+    const auto table = static_cast<QModbusDataUnit::RegisterType>(QModbusDataUnit::HoldingRegisters);
+
+    int startAddress = addr;
+
+    // do not go beyond 10 entries
+    quint16 numberOfEntries = count;
+    return QModbusDataUnit(table, startAddress, numberOfEntries);
 }
 
-void LDMDevice::setPort_boud(int port_boud){
-    m_port_boud = port_boud;
-}
 
-void LDMDevice::setModel(int model){
-    m_model = model;
-    m_looker->setModel(model);
-}
 
-void LDMDevice::setLookerEnabled(bool state){
-    m_looker->setEnabled(state);
-}
+
+
+
+
+
+
 
 
