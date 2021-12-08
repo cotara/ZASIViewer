@@ -1,5 +1,6 @@
 #include "zasilooker.h"
 #include "ui_zasilooker.h"
+#include <QDebug>
 
 ZasiLooker::ZasiLooker(QWidget *parent,int diam, int num) : Looker(parent,num),  ui(new Ui::ZasiLooker), m_model(diam)
 {
@@ -10,7 +11,7 @@ ZasiLooker::ZasiLooker(QWidget *parent,int diam, int num) : Looker(parent,num), 
     ui->lcdNumber_2->setPalette(palette);
     ui->lcdNumber_3->setPalette(palette);
 
-    QString fname = "Fault log "+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx";
+    fname = "Fault log "+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx";
 }
 
 ZasiLooker::~ZasiLooker()

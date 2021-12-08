@@ -4,7 +4,15 @@
 #include <QWidget>
 #include "looker.h"
 #include <QDateTime>
-#include "\QtXlsxWriter-master\QtXlsxWriter-master\srcxlsxdocument.h"
+
+#include "xlsxdocument.h"
+#include "xlsxchartsheet.h"
+#include "xlsxcellrange.h"
+#include "xlsxchart.h"
+#include "xlsxrichstring.h"
+#include "xlsxworkbook.h"
+
+
 namespace Ui {
 class ZasiLooker;
 }
@@ -31,6 +39,8 @@ private:
     const QString lightgreen = "QLabel { background-color : lightgreen; }";
     const QString yellow = "QLabel { background-color : yellow; }";
     const QString red = "QLabel { background-color : red; color : white }";
+    QString fname;
+    int m_current_xlsx_line;
 
 
 };
