@@ -19,14 +19,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     m_console->setMaximumHeight(250);
     ui->actionconsoleOn->setChecked(false);
     connect(m_connectionPanel,&ConnectionPanel::clearConsole,this,&MainWindow::clearConsole);
+
     //Добавление виджетов
     HLayout->addLayout(VLayout);
     HLayout->addWidget(m_connectionPanel);
     VLayout->addLayout(devicesLayout);
     VLayout->addWidget(m_console);
 
-        //Чтение настроек
-
+    //Чтение настроек
     QSettings settings ("settings.ini",QSettings::IniFormat);
     settings.beginGroup("Settings");
 

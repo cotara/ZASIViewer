@@ -4,13 +4,7 @@
 #include <QWidget>
 #include "looker.h"
 #include <QDateTime>
-
-#include "xlsxdocument.h"
-#include "xlsxchartsheet.h"
-#include "xlsxcellrange.h"
-#include "xlsxchart.h"
-#include "xlsxrichstring.h"
-#include "xlsxworkbook.h"
+#include "excelwriter.h"
 
 
 namespace Ui {
@@ -25,17 +19,18 @@ public:
     explicit ZasiLooker(QWidget *parent = nullptr, int diam=5, int num=0);
     ~ZasiLooker();
     virtual void rePaint();
+    virtual void onConnect(bool state);
 
 private slots:
 
     void on_setUstButton_clicked();
     void on_DropDefectCountButton_clicked();
     void on_onHighButton_clicked(bool checked);
-    void writeToExcel();
 private:
     Ui::ZasiLooker *ui;
-    double m_model,m_vers,m_ustMin,m_ustMax,m_ustCur,m_highCur,m_voltageCur,m_countBang;
-    bool m_isHigh;
+    ExcelWriter *m_excelFile;
+    short m_isHigh=-1,m_model=-1,m_vers=-1,m_ustMin=-1,m_ustMax=-1,m_ustCur=-1,m_highCur=-1,m_voltageCur=-1,m_countBang=-1;
+
     const QString lightgreen = "QLabel { background-color : lightgreen; }";
     const QString yellow = "QLabel { background-color : yellow; }";
     const QString red = "QLabel { background-color : red; color : white }";

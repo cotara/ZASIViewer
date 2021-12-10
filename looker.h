@@ -8,16 +8,18 @@ class Looker : public QGroupBox
     Q_OBJECT
 public:
     explicit Looker(QWidget *parent = nullptr,int num=0);
-    void setData(const QVector<double>& data);
+    void setData(const QVector<short>& data);
     void setName(int name);
     virtual void setModel(int );
     virtual void rePaint();
+    virtual void onConnect(bool state);
     virtual ~Looker();
-    QVector<double>& data();
+
+    QVector<short>& data();
 signals:
     void onSetReg(int addr, int count, const QVector <unsigned short>& data);
 private:
-     QVector <double> m_data;
+     QVector <short> m_data;
      int m_devNum;
 
 };

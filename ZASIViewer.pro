@@ -17,6 +17,7 @@ SOURCES += \
     centerviewer.cpp \
     connectionpanel.cpp \
     console.cpp \
+    excelwriter.cpp \
     ldmdevice.cpp \
     looker.cpp \
     main.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
     centerviewer.h \
     connectionpanel.h \
     console.h \
+    excelwriter.h \
     ldmdevice.h \
     looker.h \
     mainwindow.h \

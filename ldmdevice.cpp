@@ -126,12 +126,15 @@ void LDMDevice::onConnect(){
         m_ModbusClient->setTimeout(100);
         m_ModbusClient->setNumberOfRetries(2);
         m_ModbusClient->connectDevice();
+        m_looker->onConnect(true);
     }
 }
 
 void LDMDevice::onDisconnect(){
-    if (m_ModbusClient->state() == QModbusDevice::ConnectedState)
+    if (m_ModbusClient->state() == QModbusDevice::ConnectedState){
         m_ModbusClient->disconnectDevice();
+        m_looker->onConnect(false);
+    }
 }
 //Состояние изменилось
 void LDMDevice::onModbusStateChanged(int state){
@@ -203,9 +206,6 @@ void LDMDevice::onReadReady()
     reply->deleteLater();
 }
 
-
-
-
 //Обработчки данных, пришедших от устройства
 void LDMDevice::modbusDataProcessing(){
     QString str = "REPLY FROM " +  QString::number(m_server) + " DEV: ";
@@ -216,13 +216,13 @@ void LDMDevice::modbusDataProcessing(){
 
     emit modbusDataReceved(m_server, str);
 
-    QVector<double> doubleData, tempData;
+    QVector<short> shortData;
 
     if(modbusRegs.size()!=0){
         setLookerEnabled(true);
         for(unsigned short i:modbusRegs)
-            doubleData.append(static_cast<double> (i));
-        m_looker->setData(doubleData);
+            shortData.append(static_cast<short>(i));
+        m_looker->setData(shortData);
     }
     else{
         setLookerEnabled(false);
@@ -235,10 +235,9 @@ QModbusDataUnit LDMDevice::readRequest() const
 
     int startAddress = 0;
 
-    quint16 numberOfEntries = 10;
+    quint16 numberOfEntries = 17;
     return QModbusDataUnit(table, startAddress, numberOfEntries);
 }
-
 
 //Хотим записать регистр
 void LDMDevice::setReg(int addr, int count, const QVector <unsigned short>& data)

@@ -9,7 +9,7 @@ Looker::~Looker()
 {
 
 }
-void Looker::setData(const QVector<double> &data)
+void Looker::setData(const QVector<short> &data)
 {
     m_data = data;
     rePaint();
@@ -30,6 +30,11 @@ void Looker::rePaint()
 
 }
 
-QVector<double> &Looker::data(){
+void Looker::onConnect(bool)
+{
+
+}
+
+QVector<short> &Looker::data(){
     return m_data;
 }
