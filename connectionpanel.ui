@@ -110,12 +110,16 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>LDM -</string>
+           <string>ЗАСИ - </string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="diamBox1"/>
+         <widget class="QLabel" name="modelLabel">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -409,7 +413,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>LDM -</string>
+           <string>LDM - </string>
           </property>
          </widget>
         </item>

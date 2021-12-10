@@ -1,6 +1,7 @@
 #include "zasilooker.h"
 #include "ui_zasilooker.h"
 #include <QDebug>
+#include <QFileDialog>
 
 ZasiLooker::ZasiLooker(QWidget *parent,int diam, int num) : Looker(parent,num),  ui(new Ui::ZasiLooker), m_model(diam){
     ui->setupUi(this);
@@ -10,6 +11,9 @@ ZasiLooker::ZasiLooker(QWidget *parent,int diam, int num) : Looker(parent,num), 
     ui->lcdNumber_2->setPalette(palette);
     ui->lcdNumber_3->setPalette(palette);
     m_excelFile = new ExcelWriter(this);
+
+    ui->isHighLabel->setObjectName("BigLabel");//css t
+    setEnabled(false);
 }
 
 ZasiLooker::~ZasiLooker(){
@@ -25,7 +29,8 @@ void ZasiLooker::rePaint(){
 
     //Если это первое  сообщение сессии
     if(m_isHigh==-1){
-        m_excelFile->writeStartMessage(QString(m_model));
+        emit modelChanged(m_model);
+        m_excelFile->writeStartMessage(QString::number(m_model));
         m_excelFile->writeToFile(highInstarting,m_data.at(10));
     }
     //Если значение изменилось
@@ -71,7 +76,8 @@ void ZasiLooker::onConnect(bool state){
         m_excelFile = new ExcelWriter;
     }
     else{
-        m_excelFile->close("ZASI log "+ QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx");
+        QString path = QFileDialog::getExistingDirectory(this, "Выберите папку для сохранения", "./log");
+        m_excelFile->close(path+"\\ZASI log "+ QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx");
         delete m_excelFile;
         m_excelFile=nullptr;
         m_isHigh=-1;
@@ -107,6 +113,7 @@ void ZasiLooker::on_DropDefectCountButton_clicked(){
     QVector<unsigned short> data;
     data.append(0);
     emit onSetReg(16, 1, data);
+    m_countBang=0;
     if(m_excelFile)
         m_excelFile->writeToFile(dropDeffectCount,0);
 }

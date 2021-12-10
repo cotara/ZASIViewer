@@ -30,7 +30,6 @@ private slots:
     void on_actionconsoleOn_toggled(bool arg1);
     void on_actionsettingsOn_toggled(bool arg1);
     void on_actiontcp_com_toggled(bool arg1);
-    void on_actiondoubleMode_toggled(bool arg1);
     void connectNewDevice(LDMDevice* dev);
     void saveSettings();
 

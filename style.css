@@ -34,7 +34,7 @@ QLabel{
 QLabel#BigLabel{
     color:#003AA3;
     font-family: SFUIText-Bold;
-    font-size: 14px;
+    font-size: 50px;
 }
 QLabel:disabled{
     color: #969696;

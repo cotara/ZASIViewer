@@ -42,8 +42,8 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     connect(ui->deviceNumLine,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(0,i);});
     connect(ui->deviceNumLine2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(1,i);});
     //Изменилась модель
-    connect(ui->diamBox1,&QComboBox::currentTextChanged,[=](const QString &text){ emit modelChanged(0,text.toInt());});
-    connect(ui->diamBox2,&QComboBox::currentTextChanged,[=](const QString &text){ emit modelChanged(1,text.toInt());});
+    //connect(ui->diamBox1,&QComboBox::currentTextChanged,[=](const QString &text){ emit modelChanged(0,text.toInt());});
+    //connect(ui->diamBox2,&QComboBox::currentTextChanged,[=](const QString &text){ emit modelChanged(1,text.toInt());});
     //Изменился айпи или номер компорта
     connect(ui->ipAdd,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(0,ipAdd_comp);});
     connect(ui->ipAdd2,&QLineEdit::textChanged,[=](const QString &ipAdd_comp){ emit ipAdd_compChanged(1,ipAdd_comp);});
@@ -56,9 +56,9 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     ui->deviceNumLine->setValue(1);
     ui->deviceNumLine2->setValue(2);
 
-    QList<QString> models{"20","40","50","120"};
-    ui->diamBox1->addItems(models);
-    ui->diamBox2->addItems(models);
+    //QList<QString> models{"20","40","50","120"};
+    //ui->diamBox1->addItems(models);
+    //ui->diamBox2->addItems(models);
 
     connect(ui->clearButton,&QPushButton::clicked,this,&ConnectionPanel::clearConsole);
     oneTwoChange(false);//Отображаем настройки для одного устройства
@@ -105,11 +105,11 @@ int ConnectionPanel::getServer(int number){
 
 int ConnectionPanel::getModel(int number)
 {
-    if(number==0)
+    /*if(number==0)
         return ui->diamBox1->currentText().toInt();
     else if(number==1)
         return ui->diamBox2->currentText().toInt();
-    else
+    else*/
         return -1;
 }
 
@@ -145,7 +145,8 @@ void ConnectionPanel::setBaudrate(int baudrate){
 
 void ConnectionPanel::setModel(int numDev, int model){
     if(numDev==0)
-        ui->diamBox1->setCurrentText(QString::number(model));
+        ui->modelLabel->setText(QString::number(model));
+        //ui->diamBox1->setCurrentText(QString::number(model));
     else if(numDev==1)
         ui->diamBox2->setCurrentText(QString::number(model));
 }

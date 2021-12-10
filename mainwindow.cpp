@@ -32,15 +32,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
 
     //Считывание настроек необходимо делать до коннектов, чтобы задать только значения в панели управления
     m_connectionPanel->setIP(0,settings.value("ip0").toString());
-    m_connectionPanel->setIP(1,settings.value("ip1").toString());
     m_connectionPanel->setPort(0, settings.value("port0").toInt());
-    m_connectionPanel->setPort(1, settings.value("port1").toInt());
     m_connectionPanel->setComport(settings.value("comport").toString());
     m_connectionPanel->setBaudrate(settings.value("baudrate").toInt());
-    m_connectionPanel->setModel(0,settings.value("model0").toInt());
-    m_connectionPanel->setModel(1,settings.value("model1").toInt());
+    //m_connectionPanel->setModel(0,settings.value("model0").toInt());
     m_connectionPanel->setServer(0,settings.value("server0").toInt());
-    m_connectionPanel->setServer(1,settings.value("server1").toInt());
 
         //Создаем девайсы
     devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::LDM));
@@ -49,11 +45,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
 
     //Проверка был ли включен двойной режим необходмо делать после создания первого девайса, чтобы можно было добавить второй.
     if(settings.value("interfaceMode").toBool() == 0)//Проверяем тип девайсов
-        connectNewDevice(devices.at(0));            //Если Serial, просто вызываем коннекты
+        connectNewDevice(devices.at(0));            //Если Serial, просто вызываем коннекты, т.к. он уже создан
     else
-        ui->actiontcp_com->setChecked(true);        //Иначе создаем нажимаем кнопку
-
-    ui->actiondoubleMode->setChecked(settings.value("doubleMode").toBool());//Проверяем сколько девайсов было в настройках
+        ui->actiontcp_com->setChecked(true);        //Иначе нажимаем кнопку смены интерфейса
 
     settings.endGroup();
 
@@ -72,12 +66,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
 MainWindow::~MainWindow()
 {
     saveSettings();
-    delete ui;
     for (LDMDevice *i:devices)
         delete i;
     delete m_statusBar;
     delete m_console;
     delete m_connectionPanel;
+    delete ui;
 }
 
 void MainWindow::connectNewDevice(LDMDevice *dev){
@@ -85,6 +79,7 @@ void MainWindow::connectNewDevice(LDMDevice *dev){
     connect(dev,&LDMDevice::errorOccured, this,&MainWindow::connectionFailed);                       //Сообщение об ошибке
     connect(dev,&LDMDevice::modbusRequestSent,this,&MainWindow::modbusPacketPrint);                //Печатаем запрос
     connect(dev,&LDMDevice::modbusDataReceved,this,&MainWindow::modbusPacketPrint);               //Пришли данные по modbus
+    connect(dev,&LDMDevice::modelChanged,m_connectionPanel,[=](int model){m_connectionPanel->setModel(0,model);});
 }
 
 void MainWindow::saveSettings(){
@@ -92,20 +87,14 @@ void MainWindow::saveSettings(){
       QSettings settings("settings.ini",QSettings::IniFormat);
       settings.beginGroup("Settings");
       settings.setValue( "ip0", m_connectionPanel->getIpAdd(0));
-      settings.setValue( "ip1", m_connectionPanel->getIpAdd(1));
       settings.setValue( "port0", m_connectionPanel->getPort(0));
-      settings.setValue( "port1", m_connectionPanel->getPort(1));
       settings.setValue( "comport", m_connectionPanel->getComport());
       settings.setValue( "baudrate", m_connectionPanel->getBaud());
       settings.setValue( "model0", m_connectionPanel->getModel(0));
-      settings.setValue( "model1", m_connectionPanel->getModel(1));
       settings.setValue( "server0", m_connectionPanel->getServer(0));
-      settings.setValue( "server1", m_connectionPanel->getServer(1));
-      settings.setValue( "doubleMode", ui->actiondoubleMode->isChecked());
       settings.setValue( "interfaceMode", ui->actiontcp_com->isChecked());
 
       settings.endGroup();
-
 }
 
 void MainWindow::connectionChanged(int server, int status,const QString &host){
@@ -260,29 +249,6 @@ void MainWindow::on_actiontcp_com_toggled(bool arg1){
 }
 
 
-//Переключение 1-2 устройства
-void MainWindow::on_actiondoubleMode_toggled(bool arg1){
-    m_connectionPanel->setDoubleMode(arg1);
-
-    if(arg1){//Если надо добавить второго
-        if(ui->actiontcp_com->isChecked())//tcp mode
-            devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(1),m_connectionPanel->getPort(1),m_connectionPanel->getServer(1),ConnectionType::Tcp,m_connectionPanel->getModel(1),DeviceType::LDM));
-        else
-            devices.append(new LDMDevice(this,devices[0]->getModbusClient(),m_connectionPanel->getServer(1),ConnectionType::Serial,m_connectionPanel->getModel(1),DeviceType::LDM));
-
-        connectNewDevice(devices[1]);
-        devicesLayout->addWidget(devices.at(1));
-        currentCountDev++;
-    }
-    else{
-        if(devices.size()>1){//Удалять можно только, если 2 и более устройств
-            devicesLayout->removeWidget(devices.at(1));
-            currentCountDev--;
-            delete devices.at(1);
-            devices.remove(1);
-        }
-    }
-}
 
 
 

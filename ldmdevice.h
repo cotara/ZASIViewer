@@ -65,6 +65,7 @@ private slots:
     void onModbusStateChanged(int state);
     void handlerTimer();
     void onReadReady();
+    void ackReady();
     void setReg(int addr, int count,const QVector <unsigned short>& data);
     QModbusDataUnit readRequest() const;
     QModbusDataUnit writeRequest(int addr, int count) const;
@@ -74,6 +75,7 @@ signals:
     void errorOccured(const QString &msg);
     void modbusDataReceved(int server, const QString &str);
     void modbusRequestSent(int server, const QString &str);
+    void modelChanged(int model);
 
 };
 

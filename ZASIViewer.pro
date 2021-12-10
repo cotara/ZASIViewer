@@ -3,8 +3,8 @@ QT       += core gui serialport network serialbus printsupport
 VERSION = 1.0
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-EXTRA_QMAKE_TARGET_PRODUCT =  LDM Viewer
-QMAKE_TARGET_DESCRIPTION = Клиент для измерителей диаметров LDM
+EXTRA_QMAKE_TARGET_PRODUCT =  ZASI Viewer
+QMAKE_TARGET_DESCRIPTION = Клиент для ZASI
 QMAKE_TARGET_COPYRIGHT = NurRuslan
 
 CONFIG += c++11

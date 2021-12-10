@@ -9,6 +9,7 @@ LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int serve
 
     if(deviceType == LDM){
         m_looker = new ZasiLooker(this,m_model,m_server);
+        connect(m_looker,&ZasiLooker::modelChanged,this,&LDMDevice::modelChanged);
     }
     createNewClien(nullptr, type);//Создаем нового клиента с коннектами
 
@@ -174,7 +175,7 @@ void LDMDevice::handlerTimer(){
             delete reply; // broadcast replies return immediately
     }
     else{
-        emit errorOccured("Устройство " + QString::number(reply->serverAddress()) + " : " + "Read error: " + m_ModbusClient->errorString());
+        emit errorOccured("Read error: " + m_ModbusClient->errorString());
         m_looker->setEnabled(false);
     }
 }
@@ -205,6 +206,8 @@ void LDMDevice::onReadReady()
 
     reply->deleteLater();
 }
+
+
 
 //Обработчки данных, пришедших от устройства
 void LDMDevice::modbusDataProcessing(){
@@ -249,34 +252,47 @@ void LDMDevice::setReg(int addr, int count, const QVector <unsigned short>& data
 
     if (auto *reply = m_ModbusClient->sendWriteRequest(writeUnit, m_server)) {
         if (!reply->isFinished()) {
-            connect(reply, &QModbusReply::finished, this, [this, reply]() {
-
-                if (reply->error() == QModbusDevice::ProtocolError)
-                    emit errorOccured("Write response error (" + QString::number(reply->serverAddress()) + " DEV): "+ reply->errorString());
-                else if (reply->error() != QModbusDevice::NoError)
-                   emit errorOccured("Another Write error (" + QString::number(reply->serverAddress()) + " DEV): "+ reply->errorString());
-                else if(reply->error() == QModbusDevice::NoError){
-                    modbusRegs.clear();
-                    const QModbusDataUnit unit = reply->result();
-                    for (int i = 0, total = int(unit.valueCount()); i < total; ++i)
-                        modbusRegs.append(unit.value(i));
-                    QString str = "REPLY FROM " +  QString::number(m_server) + " DEV: ";
-                    for(unsigned short i:modbusRegs)
-                        str+=QString::number(i) + " ";
-                    str+="\n";
-                    emit modbusDataReceved(m_server, str);
-                }
-                reply->deleteLater();
-            });
+                connect(reply, &QModbusReply::finished, this, &LDMDevice::ackReady);
+                emit modbusRequestSent(reply->serverAddress(),"WRITE TO " +  QString::number(m_server) + " DEV: ");//Вывод в консоль
         }
         else
             reply->deleteLater();// broadcast replies return immediately
     }
     else
-        emit errorOccured("Устройство " + QString::number(reply->serverAddress()) + " : " + "Write error: " + m_ModbusClient->errorString());
+        emit errorOccured("Write error: " + m_ModbusClient->errorString());
 }
 
+void LDMDevice::ackReady(){
+    auto reply = qobject_cast<QModbusReply *>(sender());//ответ
 
+    int servAdd = reply->serverAddress();               //Устройства откуда ответ
+    if (!reply){
+        m_looker->setEnabled(false);
+        return;
+    }
+
+    if (reply->error() == QModbusDevice::ProtocolError)
+        emit errorOccured("Write response error (" + QString::number(reply->serverAddress()) + " DEV): "+ reply->errorString());
+
+    else if (reply->error() == QModbusDevice::NoError) {
+        m_looker->setEnabled(true);
+        modbusRegs.clear();
+        const QModbusDataUnit unit = reply->result();
+        for (int i = 0, total = int(unit.valueCount()); i < total; ++i)
+            modbusRegs.append(unit.value(i));
+        QString str = "ACK FROM " +  QString::number(m_server) + " DEV: ";
+        for(unsigned short i:modbusRegs)
+            str+=QString::number(i) + " ";
+        str+="\n";
+        emit modbusDataReceved(m_server, str);
+    }
+    else{
+         emit errorOccured("Another Write error (" + QString::number(servAdd) + " DEV): "+ reply->errorString());
+         m_looker->setEnabled(false);
+    }
+    m_timer->start();
+    reply->deleteLater();
+}
 QModbusDataUnit LDMDevice::writeRequest(int addr, int count) const
 {
     const auto table = static_cast<QModbusDataUnit::RegisterType>(QModbusDataUnit::HoldingRegisters);

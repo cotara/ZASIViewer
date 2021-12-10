@@ -16,7 +16,7 @@ void ExcelWriter::writeToFile(int type, short value){
         m_xlsxFile->write(row,col++,value);
         break;
     case highChanged:
-        m_xlsxFile->write(row,col++,"Изменено значение высокго напряжения");
+        m_xlsxFile->write(row,col++,"Изменено значение высокого напряжения");
         m_xlsxFile->write(row,col++,value);
         break;
     case highInstarting:
@@ -35,7 +35,7 @@ void ExcelWriter::writeToFile(int type, short value){
         bangsCount=value;
         break;
     case dropDeffectCount:
-        m_xlsxFile->write(row,col++,"Произошел пробой");
+        m_xlsxFile->write(row,col++,"Сброшено количество дефектов");
         m_xlsxFile->write(row,col++,value);
         bangsCount=value;
         break;
@@ -54,8 +54,7 @@ void ExcelWriter::writeStartMessage(const QString &mes){
 
 void ExcelWriter::close(const QString &name){
     row++;
-    if(bangsCount==0)
-        bangsCount=
+
     m_xlsxFile->write(row,col++,"Количество выявленных дефектов");
     if(bangsCount-bangsCountInStarting < 0)
         m_xlsxFile->write(row,col++,0);

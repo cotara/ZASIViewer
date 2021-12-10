@@ -8,8 +8,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
     w.showMaximized();
-    w.setWindowTitle("LDMViewer");
-    w.setWindowIcon(QIcon(":/res/target.png"));
+    w.setWindowTitle("ZASIViewer");
+    w.setWindowIcon(QIcon(":/res/flash.png"));
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/Nunito/Nunito-Light.ttf");
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/GranaPadano.ttf");
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/SF/SFUIText-Bold.ttf");

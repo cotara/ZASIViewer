@@ -18,6 +18,7 @@ public:
     QVector<short>& data();
 signals:
     void onSetReg(int addr, int count, const QVector <unsigned short>& data);
+    void modelChanged(int model);
 private:
      QVector <short> m_data;
      int m_devNum;

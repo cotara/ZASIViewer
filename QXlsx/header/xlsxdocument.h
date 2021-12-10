@@ -1,4 +1,4 @@
-// xlsxdocument.h
+// xlsx ocument.h
 
 #ifndef QXLSX_XLSXDOCUMENT_H
 #define QXLSX_XLSXDOCUMENT_H
