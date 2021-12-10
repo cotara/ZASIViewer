@@ -31,7 +31,7 @@ private:
     ExcelWriter *m_excelFile;
     short m_isHigh=-1,m_model=-1,m_vers=-1,m_ustMin=-1,m_ustMax=-1,m_ustCur=-1,m_highCur=-1,m_voltageCur=-1,m_countBang=-1;
 
-    const QString lightgreen = "QLabel { background-color : lightgreen; }";
+    const QString gray = "QLabel { background-color : grey; }";
     const QString yellow = "QLabel { background-color : yellow; }";
     const QString red = "QLabel { background-color : red; color : white }";
     QString fname;

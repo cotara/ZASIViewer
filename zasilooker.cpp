@@ -24,8 +24,10 @@ void ZasiLooker::rePaint(){
     m_ustMax = m_data.at(3);
 
     //Если это первое  сообщение сессии
-    if(m_isHigh==-1)
-         m_excelFile->writeToFile(highInstarting,m_data.at(10));
+    if(m_isHigh==-1){
+        m_excelFile->writeStartMessage(QString(m_model));
+        m_excelFile->writeToFile(highInstarting,m_data.at(10));
+    }
     //Если значение изменилось
     else if(m_isHigh!=m_data.at(10))
         m_excelFile->writeToFile(highChanged,m_data.at(10));
@@ -33,15 +35,13 @@ void ZasiLooker::rePaint(){
 
     m_highCur = m_data.at(11);
 
-
-
     if(m_ustCur==-1)
          m_excelFile->writeToFile(ustInstarting,m_data.at(12));
     else if(m_ustCur!=m_data.at(12))
         m_excelFile->writeToFile(ustChanged,m_data.at(12));
     m_ustCur = m_data.at(12);
 
-    m_voltageCur = m_data.at(13);
+    m_voltageCur = m_data.at(14);
 
     if(m_countBang==-1)
         m_excelFile->writeToFile(countBangsInstarting,m_data.at(16));
@@ -61,7 +61,7 @@ void ZasiLooker::rePaint(){
         ui->onHighButton->setText("Отключить");
     }
     else {
-        ui->isHighLabel->setStyleSheet(lightgreen);
+        ui->isHighLabel->setStyleSheet(gray);
         ui->isHighLabel->setText("Высокое напряжение отключено");
     }  
 }
@@ -71,7 +71,7 @@ void ZasiLooker::onConnect(bool state){
         m_excelFile = new ExcelWriter;
     }
     else{
-        m_excelFile->close("Fault log "+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx");
+        m_excelFile->close("ZASI log "+ QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx");
         delete m_excelFile;
         m_excelFile=nullptr;
         m_isHigh=-1;
@@ -88,7 +88,7 @@ void ZasiLooker::onConnect(bool state){
 
 void ZasiLooker::on_setUstButton_clicked(){
     QVector<unsigned short> data;
-    data.append(ui->setUstBox->value()*100);
+    data.append(static_cast<unsigned short>(ui->setUstBox->value()*100));
     emit onSetReg(12, 1, data);
 }
 

@@ -242,6 +242,7 @@ QModbusDataUnit LDMDevice::readRequest() const
 //Хотим записать регистр
 void LDMDevice::setReg(int addr, int count, const QVector <unsigned short>& data)
 {
+    m_timer->stop();
     QModbusDataUnit writeUnit = writeRequest(addr,count);
     for (int i = 0, total = int(writeUnit.valueCount()); i < total; ++i)
          writeUnit.setValue(i, data.at(i));
@@ -249,11 +250,22 @@ void LDMDevice::setReg(int addr, int count, const QVector <unsigned short>& data
     if (auto *reply = m_ModbusClient->sendWriteRequest(writeUnit, m_server)) {
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, [this, reply]() {
+
                 if (reply->error() == QModbusDevice::ProtocolError)
                     emit errorOccured("Write response error (" + QString::number(reply->serverAddress()) + " DEV): "+ reply->errorString());
                 else if (reply->error() != QModbusDevice::NoError)
                    emit errorOccured("Another Write error (" + QString::number(reply->serverAddress()) + " DEV): "+ reply->errorString());
-
+                else if(reply->error() == QModbusDevice::NoError){
+                    modbusRegs.clear();
+                    const QModbusDataUnit unit = reply->result();
+                    for (int i = 0, total = int(unit.valueCount()); i < total; ++i)
+                        modbusRegs.append(unit.value(i));
+                    QString str = "REPLY FROM " +  QString::number(m_server) + " DEV: ";
+                    for(unsigned short i:modbusRegs)
+                        str+=QString::number(i) + " ";
+                    str+="\n";
+                    emit modbusDataReceved(m_server, str);
+                }
                 reply->deleteLater();
             });
         }

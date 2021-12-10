@@ -17,6 +17,7 @@ enum EntryType{
     countBangsChanged,
     countBangsInstarting,
     dropDeffectCount,
+    startMessage
 };
 
 class ExcelWriter : public QObject
@@ -25,6 +26,7 @@ class ExcelWriter : public QObject
 public:
     explicit ExcelWriter(QObject *parent = nullptr);
     void writeToFile(int type, short value);
+    void writeStartMessage(const QString& mes);
     void close(const QString &name);
 
 private:

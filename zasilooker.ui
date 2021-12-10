@@ -60,7 +60,7 @@
         <widget class="QLCDNumber" name="lcdNumber"/>
        </item>
        <item>
-        <widget class="QSpinBox" name="setUstBox"/>
+        <widget class="QDoubleSpinBox" name="setUstBox"/>
        </item>
        <item>
         <widget class="QPushButton" name="setUstButton">
