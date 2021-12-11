@@ -26,18 +26,16 @@ void ExcelWriter::writeToFile(int type, short value){
     case countBangsChanged:
         m_xlsxFile->write(row,col++,"Произошел пробой");
         m_xlsxFile->write(row,col++,value);
+        bangsCount++;
         break;
     case countBangsInstarting:
         m_xlsxFile->write(row,col++,"Количество дефектов в начале сессии");
         m_xlsxFile->write(row,col++,value);
-        row++;
-        bangsCountInStarting=value;
-        bangsCount=value;
+        row++; 
         break;
     case dropDeffectCount:
         m_xlsxFile->write(row,col++,"Сброшено количество дефектов");
         m_xlsxFile->write(row,col++,value);
-        bangsCount=value;
         break;
     }
     col=1;
@@ -54,15 +52,7 @@ void ExcelWriter::writeStartMessage(const QString &mes){
 
 void ExcelWriter::close(const QString &name){
     row++;
-
     m_xlsxFile->write(row,col++,"Количество выявленных дефектов");
-    if(bangsCount-bangsCountInStarting < 0)
-        m_xlsxFile->write(row,col++,0);
-    else
-        m_xlsxFile->write(row,col++,bangsCount-bangsCountInStarting);
-    col=1;
-    row++;
-    m_xlsxFile->write(row,col++,"Общее количество дефектов");
     m_xlsxFile->write(row,col++,bangsCount);
 
     m_xlsxFile->saveAs(name);

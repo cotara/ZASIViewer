@@ -30,7 +30,7 @@ public:
     void close(const QString &name);
 
 private:
-    int row=1,col=1,bangsCountInStarting=0,bangsCount=0;
+    int row=1,col=1,bangsCount=0;
 
     QXlsx::Document *m_xlsxFile;
 
