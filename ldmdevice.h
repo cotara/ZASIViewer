@@ -61,6 +61,11 @@ private:
     bool isMaster = false;//Переменная, указывающая на то, что это главное устройство из всех, созданных.
     //Это важно для Serial, т.к. удалять можно только m_ModbusClient, т.к. он общий
 
+    int addrToSend = 0, counToSend=0;
+    QVector <unsigned short> dataToSend;
+    bool flag6func=false;
+    int errorsCounter=0;
+
 private slots:
     void onModbusStateChanged(int state);
     void handlerTimer();

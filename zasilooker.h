@@ -5,7 +5,7 @@
 #include "looker.h"
 #include <QDateTime>
 #include "excelwriter.h"
-
+#include <QTimer>
 
 namespace Ui {
 class ZasiLooker;
@@ -26,16 +26,19 @@ private slots:
     void on_setUstButton_clicked();
     void on_DropDefectCountButton_clicked();
     void on_onHighButton_clicked(bool checked);
+    void handlerTimer();
 private:
     Ui::ZasiLooker *ui;
     ExcelWriter *m_excelFile;
     short m_isHigh=-1,m_model=-1,m_vers=-1,m_ustMin=-1,m_ustMax=-1,m_ustCur=-1,m_highCur=-1,m_voltageCur=-1,m_countBang=-1;
-
+    short m_ustCurTemp=-1;
     const QString gray = "QLabel { background-color : #BBBBBB; }";
     const QString yellow = "QLabel { background-color : yellow; }";
     const QString red = "QLabel { background-color : red; color : white }";
     QString fname;
     int m_current_xlsx_line;
+    QTimer *m_timer;
+    bool flagUstSoftwared = false;
 };
 
 #endif // ZASILOOKER_H

@@ -124,8 +124,8 @@ void LDMDevice::onConnect(){
             m_ModbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, m_ipAdd_comp);
         }
 
-        m_ModbusClient->setTimeout(100);
-        m_ModbusClient->setNumberOfRetries(2);
+        m_ModbusClient->setTimeout(200);
+        m_ModbusClient->setNumberOfRetries(0);
         m_ModbusClient->connectDevice();
         m_looker->onConnect(true);
     }
@@ -164,19 +164,37 @@ void LDMDevice::handlerTimer(){
          m_looker->setEnabled(false);
         return;
     }
-
-    QModbusDataUnit m_unit = readRequest();
-    if (auto *reply = m_ModbusClient->sendReadRequest(m_unit, m_server)) {
-        if (!reply->isFinished()){
-            connect(reply, &QModbusReply::finished, this, &LDMDevice::onReadReady);
-            emit modbusRequestSent(reply->serverAddress(),"REQ TO " +  QString::number(m_server) + " DEV: ");//Вывод в консоль
+    QModbusDataUnit m_unit;
+    if(flag6func){
+        m_unit = writeRequest(addrToSend,counToSend);
+        for (int i = 0, total = int(m_unit.valueCount()); i < total; ++i)
+             m_unit.setValue(i, dataToSend.at(i));
+        if (auto *reply = m_ModbusClient->sendWriteRequest(m_unit, m_server)) {
+            if (!reply->isFinished()) {
+                    connect(reply, &QModbusReply::finished, this, &LDMDevice::ackReady);
+                    emit modbusRequestSent(reply->serverAddress(),"WRITE TO " +  QString::number(m_server) + " DEV: ");//Вывод в консоль
+            }
+            else
+                reply->deleteLater();// broadcast replies return immediately
         }
         else
-            delete reply; // broadcast replies return immediately
+            emit errorOccured("Write error: " + m_ModbusClient->errorString());
+        flag6func=false;
     }
-    else{
-        emit errorOccured("Read error: " + m_ModbusClient->errorString());
-        m_looker->setEnabled(false);
+    else {
+        m_unit = readRequest();
+        if (auto *reply = m_ModbusClient->sendReadRequest(m_unit, m_server)) {
+            if (!reply->isFinished()){
+                connect(reply, &QModbusReply::finished, this, &LDMDevice::onReadReady);
+                emit modbusRequestSent(reply->serverAddress(),"REQ TO " +  QString::number(m_server) + " DEV: ");//Вывод в консоль
+            }
+            else
+                delete reply; // broadcast replies return immediately
+        }
+        else{
+            emit errorOccured("Read error: " + m_ModbusClient->errorString());
+            m_looker->setEnabled(false);
+        }
     }
 }
 
@@ -202,6 +220,11 @@ void LDMDevice::onReadReady()
     else{
          emit errorOccured("Read response error (" + QString::number(servAdd) + " DEV): "+ reply->errorString());
          m_looker->setEnabled(false);
+         errorsCounter++;
+         if(errorsCounter>5){
+             onDisconnect();
+             errorsCounter=0;
+         }
     }
 
     reply->deleteLater();
@@ -243,23 +266,13 @@ QModbusDataUnit LDMDevice::readRequest() const
 }
 
 //Хотим записать регистр
-void LDMDevice::setReg(int addr, int count, const QVector <unsigned short>& data)
-{
-    m_timer->stop();
-    QModbusDataUnit writeUnit = writeRequest(addr,count);
-    for (int i = 0, total = int(writeUnit.valueCount()); i < total; ++i)
-         writeUnit.setValue(i, data.at(i));
-
-    if (auto *reply = m_ModbusClient->sendWriteRequest(writeUnit, m_server)) {
-        if (!reply->isFinished()) {
-                connect(reply, &QModbusReply::finished, this, &LDMDevice::ackReady);
-                emit modbusRequestSent(reply->serverAddress(),"WRITE TO " +  QString::number(m_server) + " DEV: ");//Вывод в консоль
-        }
-        else
-            reply->deleteLater();// broadcast replies return immediately
-    }
-    else
-        emit errorOccured("Write error: " + m_ModbusClient->errorString());
+//Чтобы запрос на 6 ффункцию не улетел вместе с 3-ей, сохраняем параметры запроса и выставляем флаг
+//Отправится по таймеру
+void LDMDevice::setReg(int addr, int count, const QVector <unsigned short>& data){
+    addrToSend = addr;
+    counToSend = count;
+    dataToSend = data;
+    flag6func = true;
 }
 
 void LDMDevice::ackReady(){
@@ -290,7 +303,6 @@ void LDMDevice::ackReady(){
          emit errorOccured("Another Write error (" + QString::number(servAdd) + " DEV): "+ reply->errorString());
          m_looker->setEnabled(false);
     }
-    m_timer->start();
     reply->deleteLater();
 }
 QModbusDataUnit LDMDevice::writeRequest(int addr, int count) const
