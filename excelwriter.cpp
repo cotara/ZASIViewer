@@ -4,6 +4,20 @@ ExcelWriter::ExcelWriter(QObject *parent) : QObject(parent){
     m_xlsxFile = new QXlsx::Document(this);
 }
 
+ExcelWriter::~ExcelWriter(){
+    delete m_xlsxFile;
+}
+//Стартовая запись
+void ExcelWriter::writeStartMessage(const QString &mes){
+    col++;
+    m_xlsxFile->write(row,col++,"Протокол сессии работы аппарата высоковольтного испытательного ЗАСИ - " + mes);
+    m_xlsxFile->write(row,col++,QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"));
+    col=1;
+    row+=2;
+    m_xlsxFile->autosizeColumnWidth();
+    m_xlsxFile->saveAs(fileName);
+}
+
 void ExcelWriter::writeToFile(int type, short value){
 
     m_xlsxFile->write(row,col++,QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"));
@@ -59,17 +73,7 @@ void ExcelWriter::writeToFile(int type, short value){
     m_xlsxFile->autosizeColumnWidth();
     m_xlsxFile->saveAs(fileName);
 }
-
-void ExcelWriter::writeStartMessage(const QString &mes){
-    col++;
-    m_xlsxFile->write(row,col++,"Протокол сессии работы аппарата высоковольтного испытательного ЗАСИ - " + mes);
-    m_xlsxFile->write(row,col++,QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"));
-    col=1;
-    row+=2;
-    m_xlsxFile->autosizeColumnWidth();
-    m_xlsxFile->saveAs(fileName);
-}
-
+//Завершающая запись
 void ExcelWriter::close(){
     row++;
     m_xlsxFile->write(row,col++,"Количество выявленных дефектов");
@@ -78,7 +82,6 @@ void ExcelWriter::close(){
     m_xlsxFile->saveAs(fileName);
 }
 
-void ExcelWriter::setFileName(const QString &name)
-{
+void ExcelWriter::setFileName(const QString &name){
     fileName = name;
 }

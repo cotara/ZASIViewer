@@ -112,6 +112,10 @@ QDoubleSpinBox{
     padding-left:5px;
     padding-right:5px;
 }
+QDoubleSpinBox:disabled{
+    color: #969696;
+    background-color: #F0F0F0;
+}
 QComboBox{
     font-family: SFUIText-Bold;
     font-size:14px;

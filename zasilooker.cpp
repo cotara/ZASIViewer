@@ -10,6 +10,7 @@ ZasiLooker::ZasiLooker(QWidget *parent,int diam, int num) : Looker(parent,num), 
     ui->lcdNumber->setPalette(palette);
     ui->lcdNumber_2->setPalette(palette);
     ui->lcdNumber_3->setPalette(palette);
+
     m_excelFile = new ExcelWriter(this);
 
     ui->isHighLabel->setObjectName("BigLabel");//css t
@@ -30,59 +31,61 @@ void ZasiLooker::rePaint(){
     m_vers = m_data.at(1);
     m_ustMin = m_data.at(2);
     m_ustMax = m_data.at(3);
+    m_voltageCur = m_data.at(14);
 
     ui->setUstBox->setMinimum(m_ustMin/100.0);
     ui->setUstBox->setMaximum(m_ustMax/100.0);
 
     m_isHigh = m_data.at(10);
-
-
-    //Если это первое  сообщение сессии
-    if(m_highCur==-1){
-        emit modelChanged(m_model);
-        m_excelFile->writeStartMessage(QString::number(m_model));
-        m_excelFile->writeToFile(highInstarting,m_data.at(11));
+    //Если первый раз получаем пакет за эту сессию
+    if(!startSessionFlag){
+        emit modelChanged(m_model);//Устанавливаем модель в панель управления
+        if(loggingProperty){
+            m_excelFile->writeStartMessage(QString::number(m_model));
+            m_excelFile->writeToFile(highInstarting,m_data.at(11));
+            m_excelFile->writeToFile(ustInstarting,m_data.at(12));
+            m_excelFile->writeToFile(countBangsInstarting,m_data.at(16));
+        }
+        m_ustCur = m_data.at(12);
+        startSessionFlag = true;
     }
-    //Если значение изменилось
-    else if(m_highCur!=m_data.at(11))
-        m_excelFile->writeToFile(highChanged,m_data.at(11));
+    else{
+        if(loggingProperty){
+            //Если изменилось текущее высокое
+            if(m_highCur!=m_data.at(11))
+                 m_excelFile->writeToFile(highChanged,m_data.at(11));
+            //Если изменилась уставка
+            if(m_ustCur!=m_data.at(12)){
+                if(flagUstSoftwared){//Если она изменилась из этой программы
+                    if(loggingProperty) m_excelFile->writeToFile(ustSoftwared,m_data.at(12));
+                    m_ustCur = m_data.at(12);
+                    flagUstSoftwared=false;
+                }
+                else{//Если уставку поменяли из прибора
+                    if(!m_timer->isActive())
+                        m_timer->start();           //Запускаем таймер
+                    m_ustCurTemp = m_data.at(12);   //Запоминаем кандидата на запись в лог
+                }
+            }
+            //Изменилось число пробоев
+            if(m_countBang!=m_data.at(16)){
+                if(m_data.at(16) == 0)//Дефекты сбросили из прибора
+                    m_excelFile->writeToFile(dropDeffectCountFromHardware,0);
+                else                 //Обнаружили пробой
+                    m_excelFile->writeToFile(countBangsChanged,m_data.at(16));
+            }
+        }
+        else m_ustCur = m_data.at(12);
+    }
     m_highCur = m_data.at(11);
-
-    if(m_ustCur==-1){
-         m_ustCur = m_data.at(12);
-         m_excelFile->writeToFile(ustInstarting,m_data.at(12));
-    }
-    else if(m_ustCur!=m_data.at(12)){
-        if(flagUstSoftwared){
-            m_excelFile->writeToFile(ustSoftwared,m_data.at(12));
-            m_ustCur = m_data.at(12);
-            flagUstSoftwared=false;
-        }
-        else{
-            if(!m_timer->isActive())
-                m_timer->start();
-            m_ustCurTemp = m_data.at(12);
-        }
-    }
-
-    m_voltageCur = m_data.at(14);
-
-    if(m_countBang==-1)
-        m_excelFile->writeToFile(countBangsInstarting,m_data.at(16));
-    else if(m_countBang!=m_data.at(16)){
-        if(m_data.at(16) == 0)
-            m_excelFile->writeToFile(dropDeffectCountFromHardware,0);
-        else
-            m_excelFile->writeToFile(countBangsChanged,m_data.at(16));
-    }
     m_countBang = m_data.at(16);
 
-
+    //Рисуем значения на экране
     ui->lcdNumber->display(m_ustCur/100.0);//Текущая уставка по напряжению
     ui->lcdNumber_2->display(m_voltageCur/100.0);//Текущее амплитудное напряжение
     ui->lcdNumber_3->display(m_countBang);//Количество пробоев
 
-    //Отображалкой управляем в зависимости от отображающего регистра 0x0B
+    //Данный регистр управляет большой красно-серой отображалкой
     if(m_highCur){
         ui->isHighLabel->setStyleSheet(red);
         ui->isHighLabel->setText("Высокое напряжение включено");  
@@ -90,9 +93,8 @@ void ZasiLooker::rePaint(){
     else {
         ui->isHighLabel->setStyleSheet(gray);
         ui->isHighLabel->setText("Высокое напряжение отключено");
-
     }  
-    //Кнопкой управляем в зависимости от управляющего регистра "высокого напряжения" 0x0A
+    //Данный регист управляет кнопкой
     if(m_isHigh){
         ui->onHighButton->setChecked(true);//Подтягиваем значение высокого на интерфейс
         ui->onHighButton->setText("Отключить");
@@ -101,6 +103,10 @@ void ZasiLooker::rePaint(){
         ui->onHighButton->setChecked(false);
         ui->onHighButton->setText("Включить");
     }
+    //Смысл в том, что если отключить защиту, то отображалка должна показать, что высокого нет.
+    //Это записано в регистре 0x0B
+    //Но кнопка при этом должна позволить выключить высокое, потому, что при подключении защиты
+    //Высокое опять включится
 }
 
 void ZasiLooker::onConnect(bool state){
@@ -109,25 +115,16 @@ void ZasiLooker::onConnect(bool state){
         m_excelFile->setFileName("log/ZASI log "+ QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx");
     }
     else{
-        m_excelFile->close();
-        delete m_excelFile;
-        m_excelFile=nullptr;
-        m_isHigh=-1;
-        m_model=-1;
-        m_vers=-1;
-        m_ustMin=-1;
-        m_ustMax=-1;
-        m_ustCur=-1;
-        m_highCur=-1;
-        m_voltageCur=-1;
-        m_countBang=-1;
-        m_ustCurTemp = -1;
+        m_excelFile->close();//Записываем финальное сообщение
+        delete m_excelFile;  //Удаляем эксельку
+        m_excelFile=nullptr; //Чистим указатель
+        startSessionFlag = false;
     }
 }
 
 void ZasiLooker::on_setUstButton_clicked(){
     QVector<unsigned short> data;
-    data.append(static_cast<unsigned short>(ui->setUstBox->value()*100));
+    data.append(qRound(ui->setUstBox->value()*100));
     emit onSetReg(12, 1, data);
     flagUstSoftwared = true;
 }
@@ -143,14 +140,15 @@ void ZasiLooker::on_onHighButton_clicked(bool checked){
         ui->onHighButton->setText("Включить");
 }
 //Задержка по записи уставки
-//Странный алгоритм
+//Срабатывает, если за последнее время не меняли уставку.
 void ZasiLooker::handlerTimer(){
-     if(m_ustCurTemp == m_ustCur){
-        m_excelFile->writeToFile(ustChanged,m_ustCur);
-        m_timer->stop();
+     if(m_ustCurTemp != m_ustCur)//Если основную уставку еще не утверждали
+       m_ustCur = m_ustCurTemp;     //Утверждаем и ждем следующего захода
+
+     else{                      //Во второй раз, уставка уже утверждена, значит можно ее записывать
+         m_excelFile->writeToFile(ustChanged,m_ustCur);
+         m_timer->stop();
      }
-     else
-        m_ustCur = m_ustCurTemp;
 }
 
 void ZasiLooker::on_DropDefectCountButton_clicked(){

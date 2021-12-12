@@ -29,7 +29,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     //Чтение настроек
     QSettings settings ("settings.ini",QSettings::IniFormat);
     settings.beginGroup("Settings");
-
     //Считывание настроек необходимо делать до коннектов, чтобы задать только значения в панели управления
     m_connectionPanel->setIP(0,settings.value("ip0").toString());
     m_connectionPanel->setPort(0, settings.value("port0").toInt());
@@ -38,17 +37,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     //m_connectionPanel->setModel(0,settings.value("model0").toInt());
     m_connectionPanel->setServer(0,settings.value("server0").toInt());
 
-        //Создаем девайсы
-    devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::LDM));
+    //Создаем девайсы
+    devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::ZASI));
     devicesLayout->addWidget(devices.at(0));
-    m_statusBar = new StatusBar(ui->statusbar);
 
-    //Проверка был ли включен двойной режим необходмо делать после создания первого девайса, чтобы можно было добавить второй.
     if(settings.value("interfaceMode").toBool() == 0)//Проверяем тип девайсов
         connectNewDevice(devices.at(0));            //Если Serial, просто вызываем коннекты, т.к. он уже создан
     else
         ui->actiontcp_com->setChecked(true);        //Иначе нажимаем кнопку смены интерфейса
-
     settings.endGroup();
 
     connect(m_connectionPanel,&ConnectionPanel::connectionPushed,this,&MainWindow::connectionPushed);//Когда нажата кнопка пробуем подл/откл
@@ -56,11 +52,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     connect(m_connectionPanel,&ConnectionPanel::modelChanged,[=](int numDev, int model){ devices[numDev]->setModel(model);});
     connect(m_connectionPanel,&ConnectionPanel::ipAdd_compChanged,[=](int numDev, const QString & ipAdd){ devices[numDev]->setIpAdd_comp(ipAdd);});
     connect(m_connectionPanel,&ConnectionPanel::port_boudChanged,[=](int numDev, int port){ devices[numDev]->setPort_boud(port);});
+    connect(m_connectionPanel,&ConnectionPanel::logChekingChanged,[=](bool state){ for(auto i:devices) ;});
+
+    m_statusBar = new StatusBar(ui->statusbar);
 
     addToolBar(Qt::RightToolBarArea, ui->toolBar);//Перемещаем тулбарнаправо
 
     ui->actiondoubleMode->setVisible(false);
-
 }
 
 MainWindow::~MainWindow()
@@ -73,7 +71,7 @@ MainWindow::~MainWindow()
     delete m_connectionPanel;
     delete ui;
 }
-
+//Прописывае коннекты для нового девайса
 void MainWindow::connectNewDevice(LDMDevice *dev){
     connect(dev,&LDMDevice::connectionStatus,this,&MainWindow::connectionChanged);                   //Состояние соединения изменилось
     connect(dev,&LDMDevice::errorOccured, this,&MainWindow::connectionFailed);                       //Сообщение об ошибке
@@ -96,7 +94,7 @@ void MainWindow::saveSettings(){
 
       settings.endGroup();
 }
-
+//Изменен статус подключения. Сигнал из lmdDevice
 void MainWindow::connectionChanged(int server, int status,const QString &host){
     QString str;
 
@@ -145,7 +143,6 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
           connectingDevice++;
     }
 
-
     if(connectedDevices==0){//Нет подключеных устройств
         if(connectingDevice==0){//Нет подключающихся устройств
             connectionState.clear(); //Когда все устройста отключены, чистим мап, потому что сервера могут поменяться
@@ -155,7 +152,7 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
             m_connectionPanel->enablePanel(true);              //панель вкл
 
         }
-        else{//Процесс подключения отключения отключения/подключения
+        else{//Процесс  отключения/подключения
             ui->actiondoubleMode->setEnabled(false);
             ui->actiontcp_com->setEnabled(false);
             m_connectionPanel->connectionButtonChanged(false,2);//Текст не менять выкл
@@ -177,13 +174,14 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
         }
     }
 }
-
+//Печать сообщения об ошибке в строку статуса и консоль
+//Сигнал из lmd Device
 void MainWindow::connectionFailed( const QString &msg){
-    QString str;
     m_statusBar->setMessageBar(msg);
-    m_console->putData(str.toUtf8());
+    m_console->putData(msg.toUtf8());
 }
 
+//Нажата кнопка подключиться/отключиться
 void MainWindow::connectionPushed(bool action){
     if(action)  {
         for(LDMDevice* i:devices)
@@ -194,17 +192,14 @@ void MainWindow::connectionPushed(bool action){
                 i->onDisconnect();
     }
 }
-
+//Печатаем пакет модбас
 void MainWindow::modbusPacketPrint(int , const QString &str){
     m_console->putData(str.toUtf8());
 }
-
-
-
+//Очистить консоль по нажатию кнопки
 void MainWindow::clearConsole(){
     m_console->clear();
 }
-
 
 //Показать консоль
 void MainWindow::on_actionconsoleOn_toggled(bool arg1){
@@ -223,7 +218,6 @@ void MainWindow::on_actiontcp_com_toggled(bool arg1){
     //При смене типа надо заново создавать все устройства, поскольку в конструкторе передаются все нужные параметры (адреса, скорости и прочее
 
     for(LDMDevice * i: devices){
-
         devicesLayout->removeWidget(i);
         delete i;
     }
@@ -231,26 +225,45 @@ void MainWindow::on_actiontcp_com_toggled(bool arg1){
     devices.clear();
     if(arg1 == Tcp){
         for(int i =0;i<currentCountDev;i++){
-            devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(i),m_connectionPanel->getPort(i),m_connectionPanel->getServer(i),ConnectionType::Tcp,m_connectionPanel->getModel(i),DeviceType::LDM));
+            devices.append(new LDMDevice(this,m_connectionPanel->getIpAdd(i),m_connectionPanel->getPort(i),m_connectionPanel->getServer(i),ConnectionType::Tcp,m_connectionPanel->getModel(i),DeviceType::ZASI));
             devicesLayout->addWidget(devices.at(i));
             connectNewDevice(devices.at(i));
         }
     }
     else{
-        devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::LDM));
+        devices.append(new LDMDevice(this,m_connectionPanel->getComport(),m_connectionPanel->getBaud(),m_connectionPanel->getServer(0),ConnectionType::Serial,m_connectionPanel->getModel(0),DeviceType::ZASI));
         devicesLayout->addWidget(devices.at(0));
         connectNewDevice(devices.at(0));
         for( int i = 1; i<currentCountDev;i++){
-            devices.append(new LDMDevice(this,devices[0]->getModbusClient(),m_connectionPanel->getServer(i),ConnectionType::Serial,m_connectionPanel->getModel(i),DeviceType::LDM));
+            devices.append(new LDMDevice(this,devices[0]->getModbusClient(),m_connectionPanel->getServer(i),ConnectionType::Serial,m_connectionPanel->getModel(i),DeviceType::ZASI));
             devicesLayout->addWidget(devices.at(i));
             connectNewDevice(devices.at(i));
         }
     }
 }
-
-
-
-
-
-
+//Показать окно помощи
+void MainWindow::on_actionHelp_triggered(){
+    QMessageBox::information(this,"Помощь!","Приветствуем Вас в программе <b>ZASIViewer!</b> <br>"
+                                            "Данное приложение создано для контроля и управления приборами серии ЗАСИ.<br>"
+                                            "<br>"
+                                            "<b>Для работы с программой необходимо:</b><br>"
+                                            "1. Подключить прибор к компьютеру через преобразователь RS-485|USB или Ethernet-порт.<br>"
+                                            "2. Выбрать интерфейс подключения (Serial-485 / Ethernet) с помощью кнопки на боковой панели инструментов справа.<br>"
+                                            "3. Настроить интерфейс подключения. Для Serial-485 выбрать COM-порт и скорость обмена (по умолчанию 9600). "
+                                            "Для Ethernet установить ip-адрес и порт (указаны в инструкции по эксплуатации).<br>"
+                                            "4. Настроить адрес устройства.<br>"
+                                            "5. Для записи лога работы установите отметку в поле \"Логировать в Excel\". Лог будет сохранен в папке \"log\", находящейся в папке с программой.<br>"
+                                            "6. Нажать кнопку \"Подключиться\".<br>"
+                                            "<br>"
+                                            "<b>Функции управления прибором:</b><br>"
+                                            "1. Кнопка \"Установить\" задает введенную уставку в прибор.<br>"
+                                            "2. Кнопка \"Включить/Выключить\" включает/выключает высокое напряжение в приборе.<br>"
+                                            "3. Кнопка \"Сбросить\" устанавливает количество пробоев равным нулю.<br>"
+                                            "<br>"
+                                            "<b>Дополнительно:</b><br>"
+                                            "- Справа от адреса устройства отображается текущий статус интерфеса подключения.<br>"
+                                            "- Для изменения интерфейса подключения необходимо предварительно отключиться.<br>"
+                                            "- Кнопка \"Отображать консоль\" на панели управления справа  скрывает/отоборажает отображение сервисной информации.<br>"
+                                            "- Следующая за ней кнопка \"Отображать панель настроек\" скрывает/отоборажает настройки подключения.<br>");
+}
 

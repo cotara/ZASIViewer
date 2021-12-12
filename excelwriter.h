@@ -28,6 +28,7 @@ class ExcelWriter : public QObject
     Q_OBJECT
 public:
     explicit ExcelWriter(QObject *parent = nullptr);
+    ~ExcelWriter();
     void writeToFile(int type, short value);
     void writeStartMessage(const QString& mes);
     void close();

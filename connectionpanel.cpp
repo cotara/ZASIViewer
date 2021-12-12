@@ -1,17 +1,11 @@
 #include "connectionpanel.h"
 #include "ui_connectionpanel.h"
 
-
-
-
-ConnectionPanel::ConnectionPanel(QWidget *parent) :
-    QGroupBox(parent),
-    ui(new Ui::ConnectionPanel)
+ConnectionPanel::ConnectionPanel(QWidget *parent) : QGroupBox(parent),  ui(new Ui::ConnectionPanel)
 {
     setTitle("Настройки подключения");
     setObjectName("historysettings");
     ui->setupUi(this);
-
 
     interfaceSwitch(false);//С ком-портом
     //IP
@@ -28,7 +22,7 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     ui->port2->setEnabled(true);
 
     //Компорты
-    on_updAvblPortsButt_clicked();
+    on_updAvblPortsButt_clicked();//Обновляем список доступных компортов
     ui->spdBox->addItem(QStringLiteral("9600"), QSerialPort::Baud9600);
     ui->spdBox->addItem(QStringLiteral("19200"), QSerialPort::Baud19200);
     ui->spdBox->addItem(QStringLiteral("38400"), QSerialPort::Baud38400);
@@ -37,7 +31,7 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     ui->spdBox->addItem(QStringLiteral("460800"), 460800);
     ui->spdBox->addItem(QStringLiteral("921600"), 921600);
 
-    ui->spdBox->setCurrentIndex(0);
+    ui->spdBox->setCurrentIndex(0);//Ставим скорость 9600
     //Изменился сервер
     connect(ui->deviceNumLine,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(0,i);});
     connect(ui->deviceNumLine2,QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit serverChanged(1,i);});
@@ -52,7 +46,7 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
     connect(ui->port,&QLineEdit::textChanged,[=](const QString &port){ emit port_boudChanged(0,port.toInt());});
     connect(ui->port2,&QLineEdit::textChanged,[=](const QString &port){ emit port_boudChanged(1,port.toInt());});
     connect(ui->spdBox,&QComboBox::currentTextChanged,[=](const QString &baud){ emit port_boudChanged(0,baud.toInt());});
-
+    //Устанавливаем номер устройства по умолчанию
     ui->deviceNumLine->setValue(1);
     ui->deviceNumLine2->setValue(2);
 
@@ -71,18 +65,20 @@ ConnectionPanel::ConnectionPanel(QWidget *parent) :
 ConnectionPanel::~ConnectionPanel(){
     delete ui;
 }
-
+//Сокрытие кнопки очистки консоли
 void ConnectionPanel::enableClearConsoleButton(bool state){
     ui->clearButton->setVisible(state);
 }
-
+//Получить
 QString ConnectionPanel::getIpAdd(int number){
     if(number==0)
         return ui->ipAdd->text();
     else if(number==1)
         return ui->ipAdd2->text();
-    else
-        return QString("Empty Num");
+    else{
+        qDebug()<<"Nonexistent device in panel";
+        return  QString("");
+    }
 }
 
 int ConnectionPanel::getPort(int number){
@@ -90,8 +86,10 @@ int ConnectionPanel::getPort(int number){
         return ui->port->text().toInt();
     else if(number==1)
         return ui->port2->text().toInt();
-    else
-        return -1;
+    else{
+        qDebug()<<"Nonexistent device in panel";
+        return  -1;
+    }
 }
 
 int ConnectionPanel::getServer(int number){
@@ -99,17 +97,19 @@ int ConnectionPanel::getServer(int number){
         return ui->deviceNumLine->value();
     else if(number==1)
         return ui->deviceNumLine2->value();
-    else
-        return -1;
+    else{
+        qDebug()<<"Nonexistent device in panel";
+        return  -1;
+    }
 }
 
-int ConnectionPanel::getModel(int number)
-{
+int ConnectionPanel::getModel(int ){
     /*if(number==0)
         return ui->diamBox1->currentText().toInt();
     else if(number==1)
         return ui->diamBox2->currentText().toInt();
     else*/
+    qDebug()<<"Unused Parameter";
         return -1;
 }
 
@@ -126,6 +126,9 @@ void ConnectionPanel::setIP(int numDev, const QString &ip){
         ui->ipAdd->setText(ip);
     else if(numDev==1)
         ui->ipAdd2->setText(ip);
+    else
+        qDebug()<<"Nonexistent device in panel";
+
 }
 
 void ConnectionPanel::setPort(int numDev, int port){
@@ -133,6 +136,8 @@ void ConnectionPanel::setPort(int numDev, int port){
         ui->port->setText(QString::number(port));
     else if(numDev==1)
         ui->port2->setText(QString::number(port));
+    else
+        qDebug()<<"Nonexistent device in panel";
 }
 
 void ConnectionPanel::setComport(const QString &comport){
@@ -149,6 +154,8 @@ void ConnectionPanel::setModel(int numDev, int model){
         //ui->diamBox1->setCurrentText(QString::number(model));
     else if(numDev==1)
         ui->diamBox2->setCurrentText(QString::number(model));
+    else
+        qDebug()<<"Nonexistent device in panel";
 }
 
 void ConnectionPanel::setServer(int numDev, int server){
@@ -156,8 +163,10 @@ void ConnectionPanel::setServer(int numDev, int server){
         ui->deviceNumLine->setValue(server);
     else if(numDev==1)
         ui->deviceNumLine2->setValue(server);
+    else
+        qDebug()<<"Nonexistent device in panel";
 }
-//Изменение состояния кнопки
+//Изменение состояния кнопки из-за изменений состояния подключения
 void ConnectionPanel::connectionButtonChanged(bool enabled, int text)
 {
     ui->connectButton->setEnabled(enabled);
@@ -166,15 +175,23 @@ void ConnectionPanel::connectionButtonChanged(bool enabled, int text)
         case 1: ui->connectButton->setText("Отключиться"); break;
     }
 }
-//Изменение состояния панели
-void ConnectionPanel::enablePanel(bool enabled){
-    elementsEnable(enabled);
+//Изменение состояния панели вкл/выкл
+void ConnectionPanel::enablePanel(bool state){
+    emit doubleButtonBlock(state);
+    ui->portsBox->setEnabled(state);
+    ui->updAvblPortsButt->setEnabled(state);
+    ui->spdBox->setEnabled(state);
+    ui->deviceNumLine->setEnabled(state);
+    ui->deviceNumLine2->setEnabled(state);
+    ui->ipAdd->setEnabled(state);
+    ui->ipAdd2->setEnabled(state);
+    ui->port->setEnabled(state);
+    ui->port2->setEnabled(state);
+    ui->logBox->setEnabled(state);
 }
-
 
 //Выбор ком-порта
 void ConnectionPanel::on_portsBox_currentIndexChanged(int index){
-
     if (index != -1) {
         QSerialPortInfo serial_info;
         QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
@@ -189,10 +206,8 @@ void ConnectionPanel::on_portsBox_currentIndexChanged(int index){
     }
 }
 
-
 //Обновить доступные компорты
 void ConnectionPanel::on_updAvblPortsButt_clicked(){
-
     ui->portsBox->clear();
     QStringList list;
     QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
@@ -208,10 +223,8 @@ void ConnectionPanel::on_updAvblPortsButt_clicked(){
 void ConnectionPanel::on_connectButton_clicked(){
     if(ui->connectButton->text() == "Подключиться")
         emit connectionPushed(true);
-
     else if(ui->connectButton->text() == "Отключиться")
         emit connectionPushed(false);
-
 }
 
 //Переключение режима TCP - SERIAL
@@ -233,6 +246,7 @@ void ConnectionPanel::interfaceSwitch(bool type){
         ui->spdBox->setVisible(!type);
 
         oneTwoChange(m_doubleMode);//В случае переключения на TCP
+        ui->logBox->setCheckState(Qt::Unchecked);
 }
 //Переключение режимов 1-2 устройства
 void ConnectionPanel::oneTwoChange(int arg1){
@@ -242,12 +256,10 @@ void ConnectionPanel::oneTwoChange(int arg1){
         ui->portLabel2->setVisible(arg1);
         ui->port2->setVisible(arg1);
     }
-
     ui->settings2Box->setVisible(arg1);
 }
-
+//Статус подключения устройства
 void ConnectionPanel::setStatusLabel(int server, bool state){
-
     if(ui->deviceNumLine->text().toInt() == server){
         if(state){
             ui->statusLabel->setStyleSheet(lightgreen);
@@ -268,22 +280,8 @@ void ConnectionPanel::setStatusLabel(int server, bool state){
             ui->statusLabel2->setText("Off-line");
         }
     }
-
 }
-
-
-void ConnectionPanel::elementsEnable(bool state){
-    emit doubleButtonBlock(state);
-    ui->portsBox->setEnabled(state);
-    ui->updAvblPortsButt->setEnabled(state);
-    ui->spdBox->setEnabled(state);
-    ui->deviceNumLine->setEnabled(state);
-    ui->deviceNumLine2->setEnabled(state);
-    ui->ipAdd->setEnabled(state);
-    ui->ipAdd2->setEnabled(state);
-    ui->port->setEnabled(state);
-    ui->port2->setEnabled(state);
+void ConnectionPanel::on_checkBox_stateChanged(int arg1){
+    emit logChekingChanged(arg1);
 }
-
-
 

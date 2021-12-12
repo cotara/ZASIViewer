@@ -38,15 +38,12 @@ public slots:
         m_server = serverAdd;
         m_looker->setName(serverAdd);//меняем заголовок в лукере
     }
-    void setIpAdd_comp(const QString& ipAdd_comp){
-        m_ipAdd_comp = ipAdd_comp;
-    }
-    void setPort_boud(int port_boud){
-        m_port_boud = port_boud;
-    }
+    void setIpAdd_comp(const QString& ipAdd_comp){m_ipAdd_comp = ipAdd_comp; }
+    void setPort_boud(int port_boud){ m_port_boud = port_boud;}
     void setModel(int model){ m_model = model; m_looker->setModel(model); }
     int getServer(){return m_server;};
     void setLookerEnabled(bool state){m_looker->setEnabled(state);};
+    void setLogProperty(bool state){m_looker->loggingProperty = state;}
 private:
     QVBoxLayout *VLayout;
     QModbusClient *m_ModbusClient=nullptr;

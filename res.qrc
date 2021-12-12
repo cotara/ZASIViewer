@@ -11,6 +11,7 @@
         <file>res/target.png</file>
         <file>res/double2.png</file>
         <file>res/flash.png</file>
+        <file>res/help.png</file>
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>

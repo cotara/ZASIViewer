@@ -6,7 +6,7 @@
 #include <QSerialPortInfo>
 #include <QMessageBox>
 #include <QRegExpValidator>
-
+#include <QDebug>
 namespace Ui {
 class ConnectionPanel;
 }
@@ -24,6 +24,7 @@ public:
     int getModel(int number);
     QString getComport();
     int getBaud();
+
     void setInterface(bool type){m_interface = type;interfaceSwitch(m_interface);}
     void setDoubleMode(bool mode){m_doubleMode = mode;oneTwoChange(m_doubleMode);}
     void setIP(int numDev, const QString& ip);
@@ -32,6 +33,7 @@ public:
     void setBaudrate(int baudrate);
     void setModel(int numDev, int model);
     void setServer(int numDev, int server);
+
     void connectionButtonChanged(bool enabled,int text);
     void enablePanel(bool enabled);
 
@@ -45,11 +47,11 @@ private slots:
     void on_connectButton_clicked();
     void oneTwoChange(int arg1);
 
+    void on_checkBox_stateChanged(int arg1);
+
 private:
     Ui::ConnectionPanel *ui;
-    void elementsEnable(bool state);
     bool m_interface=false,m_doubleMode = false;
-
 
     const QString lightgreen = "QLabel { background-color : lightgreen; }";
     const QString yellow = "QLabel { background-color : yellow; }";
@@ -63,6 +65,7 @@ signals:
     void modelChanged(int numDev,int model);
     void clearConsole();
     void doubleButtonBlock(bool state);
+    void logChekingChanged(bool state);
 
 };
 

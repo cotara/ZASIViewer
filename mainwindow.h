@@ -8,7 +8,6 @@
 #include "statusbar.h"
 #include "ldmdevice.h"
 
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -33,6 +32,8 @@ private slots:
     void connectNewDevice(LDMDevice* dev);
     void saveSettings();
 
+    void on_actionHelp_triggered();
+
 private:
     Ui::MainWindow *ui;
     QHBoxLayout *HLayout,*devicesLayout;
@@ -42,6 +43,7 @@ private:
     QVector <LDMDevice*> devices;
     ConnectionPanel *m_connectionPanel;
     Console *m_console;
+
     int currentCountDev=1;
     int connectedDevices = 0;//Количество устройств, подключенных
     int connectingDevice = 0;//Количество устройств, находящихся в состоянии подключения/отключения

@@ -22,7 +22,6 @@ public:
     virtual void onConnect(bool state);
 
 private slots:
-
     void on_setUstButton_clicked();
     void on_DropDefectCountButton_clicked();
     void on_onHighButton_clicked(bool checked);
@@ -39,6 +38,7 @@ private:
     int m_current_xlsx_line;
     QTimer *m_timer;
     bool flagUstSoftwared = false;
+    bool startSessionFlag = false;
 };
 
 #endif // ZASILOOKER_H

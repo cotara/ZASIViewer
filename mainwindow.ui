@@ -53,6 +53,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionHelp"/>
    <addaction name="actionconsoleOn"/>
    <addaction name="actionsettingsOn"/>
    <addaction name="actiontcp_com"/>
@@ -123,6 +124,21 @@
    </property>
    <property name="toolTip">
     <string>Подключение второго устройства</string>
+   </property>
+  </action>
+  <action name="actionHelp">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/res/help.png</normaloff>:/res/help.png</iconset>
+   </property>
+   <property name="text">
+    <string>Help</string>
+   </property>
+   <property name="toolTip">
+    <string>Помощь</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
  </widget>

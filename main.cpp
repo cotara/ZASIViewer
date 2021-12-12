@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
     w.showMaximized();
-    w.setWindowTitle("ZASIViewer");
+    w.setWindowTitle("ZASIViewer 2.0");
     w.setWindowIcon(QIcon(":/res/flash.png"));
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/Nunito/Nunito-Light.ttf");
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/GranaPadano.ttf");
