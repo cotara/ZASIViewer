@@ -7,10 +7,6 @@ LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int serve
     m_timer->setInterval(500);
     connect(m_timer,&QTimer::timeout,this,&LDMDevice::handlerTimer);
 
-    reconnectionTimer =new QTimer(this);
-    reconnectionTimer->setInterval(1000);
-    connect(reconnectionTimer,&QTimer::timeout,this,&LDMDevice::handlerReconnectionTimer);
-
     if(deviceType == ZASI){
         m_looker = new ZasiLooker(this,m_model,m_server);
         connect(m_looker,&ZasiLooker::modelChanged,this,&LDMDevice::modelChanged);
@@ -97,8 +93,7 @@ void LDMDevice::createNewClien(QModbusClient *client, bool type){
         connect(m_ModbusClient, &QModbusClient::stateChanged,this,&LDMDevice::onModbusStateChanged);
         connect(m_ModbusClient, &QModbusClient::errorOccurred, this,[=]{
             emit errorOccured("Устройство " + QString::number(m_server) + " : " + m_ModbusClient->errorString()+"\n");
-            reconnectionTimer->start();
-
+            onConnect();//Пробуем переподключиться
             m_looker->setEnabled(false);
         });
     }
@@ -312,8 +307,4 @@ QModbusDataUnit LDMDevice::writeRequest(int addr, int count) const
     quint16 numberOfEntries = count;
     return QModbusDataUnit(table, startAddress, numberOfEntries);
 }
-void LDMDevice::handlerReconnectionTimer()
-{
-    onConnect();//Пробуем переподключиться
-    reconnectionTimer->stop();
-}
+
