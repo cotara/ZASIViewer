@@ -46,8 +46,7 @@ private slots:
     void on_updAvblPortsButt_clicked();
     void on_connectButton_clicked();
     void oneTwoChange(int arg1);
-
-    void on_checkBox_stateChanged(int arg1);
+    void on_logBox_stateChanged(int arg1);
 
 private:
     Ui::ConnectionPanel *ui;

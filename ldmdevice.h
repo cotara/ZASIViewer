@@ -48,7 +48,7 @@ private:
     QVBoxLayout *VLayout;
     QModbusClient *m_ModbusClient=nullptr;
     Looker *m_looker=nullptr;
-    QTimer *m_timer =nullptr;
+    QTimer *m_timer =nullptr, *reconnectionTimer=nullptr;
     QString m_ipAdd_comp;
     int m_port_boud;
     int m_server;
@@ -66,6 +66,7 @@ private:
 private slots:
     void onModbusStateChanged(int state);
     void handlerTimer();
+    void handlerReconnectionTimer();
     void onReadReady();
     void ackReady();
     void setReg(int addr, int count,const QVector <unsigned short>& data);

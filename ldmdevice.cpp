@@ -7,6 +7,10 @@ LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int serve
     m_timer->setInterval(500);
     connect(m_timer,&QTimer::timeout,this,&LDMDevice::handlerTimer);
 
+    reconnectionTimer =new QTimer(this);
+    reconnectionTimer->setInterval(1000);
+    connect(reconnectionTimer,&QTimer::timeout,this,&LDMDevice::handlerReconnectionTimer);
+
     if(deviceType == ZASI){
         m_looker = new ZasiLooker(this,m_model,m_server);
         connect(m_looker,&ZasiLooker::modelChanged,this,&LDMDevice::modelChanged);
@@ -17,6 +21,7 @@ LDMDevice::LDMDevice(QWidget *parent, const QString & ipAdd, int port, int serve
     VLayout->addWidget(m_looker);
     isMaster = true;//т.к. это конструктор для главного устройства
     connect(m_looker,&ZasiLooker::onSetReg,this,&LDMDevice::setReg);
+
 }
 //Конструктор для создания девайса-копии с копией QModbusClient (для Serial) подключения
 LDMDevice::LDMDevice(QWidget *parent,QModbusClient* modbusClient,int server, bool type,int model,int deviceType)
@@ -92,6 +97,8 @@ void LDMDevice::createNewClien(QModbusClient *client, bool type){
         connect(m_ModbusClient, &QModbusClient::stateChanged,this,&LDMDevice::onModbusStateChanged);
         connect(m_ModbusClient, &QModbusClient::errorOccurred, this,[=]{
             emit errorOccured("Устройство " + QString::number(m_server) + " : " + m_ModbusClient->errorString()+"\n");
+            reconnectionTimer->start();
+
             m_looker->setEnabled(false);
         });
     }
@@ -105,7 +112,7 @@ void LDMDevice::onConnect(){
          return;
     }
 
-    if (m_ModbusClient->state() != QModbusDevice::ConnectedState) {
+    if (m_ModbusClient->state() != QModbusDevice::ConnectedState && m_ModbusClient->state() != QModbusDevice::ConnectingState && m_ModbusClient->state() != QModbusDevice::ClosingState) {
         if (m_type == Serial) {
                 m_ModbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter,m_ipAdd_comp);
                 m_ModbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, m_port_boud);
@@ -192,6 +199,8 @@ void LDMDevice::handlerTimer(){
     }
 }
 
+
+
 //Пришел овтет
 void LDMDevice::onReadReady()
 {
@@ -210,13 +219,15 @@ void LDMDevice::onReadReady()
             modbusRegs.append(unit.value(i));
 
         modbusDataProcessing();
+        errorsCounter=0;
     }
     else{
          emit errorOccured("Read error (" + QString::number(servAdd) + " DEV): "+ reply->errorString()+"\n");
          m_looker->setEnabled(false);
          errorsCounter++;
          if(errorsCounter>5){
-             onDisconnect();
+             onDisconnect();//Если ответ неправильный 5 раз, пробуем переподключаться
+             onConnect();
              errorsCounter=0;
          }
     }
@@ -300,4 +311,9 @@ QModbusDataUnit LDMDevice::writeRequest(int addr, int count) const
     int startAddress = addr;
     quint16 numberOfEntries = count;
     return QModbusDataUnit(table, startAddress, numberOfEntries);
+}
+void LDMDevice::handlerReconnectionTimer()
+{
+    onConnect();//Пробуем переподключиться
+    reconnectionTimer->stop();
 }

@@ -115,7 +115,7 @@ void ZasiLooker::onConnect(bool state){
         m_excelFile->setFileName("log/ZASI log "+ QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".xlsx");
     }
     else{
-        m_excelFile->close();//Записываем финальное сообщение
+        if(loggingProperty) m_excelFile->close();//Записываем финальное сообщение
         delete m_excelFile;  //Удаляем эксельку
         m_excelFile=nullptr; //Чистим указатель
         startSessionFlag = false;

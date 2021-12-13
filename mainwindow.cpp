@@ -52,7 +52,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     connect(m_connectionPanel,&ConnectionPanel::modelChanged,[=](int numDev, int model){ devices[numDev]->setModel(model);});
     connect(m_connectionPanel,&ConnectionPanel::ipAdd_compChanged,[=](int numDev, const QString & ipAdd){ devices[numDev]->setIpAdd_comp(ipAdd);});
     connect(m_connectionPanel,&ConnectionPanel::port_boudChanged,[=](int numDev, int port){ devices[numDev]->setPort_boud(port);});
-    connect(m_connectionPanel,&ConnectionPanel::logChekingChanged,[=](bool state){ for(auto i:devices) ;});
+    connect(m_connectionPanel,&ConnectionPanel::logChekingChanged,[=](bool state){ for(auto i:devices)
+            i->setLogProperty(state);
+    });
 
     m_statusBar = new StatusBar(ui->statusbar);
 
@@ -194,6 +196,7 @@ void MainWindow::connectionPushed(bool action){
 }
 //Печатаем пакет модбас
 void MainWindow::modbusPacketPrint(int , const QString &str){
+    m_statusBar->setMessageBar("Transmition OK");
     m_console->putData(str.toUtf8());
 }
 //Очистить консоль по нажатию кнопки

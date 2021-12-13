@@ -281,7 +281,8 @@ void ConnectionPanel::setStatusLabel(int server, bool state){
         }
     }
 }
-void ConnectionPanel::on_checkBox_stateChanged(int arg1){
-    emit logChekingChanged(arg1);
-}
 
+
+void ConnectionPanel::on_logBox_stateChanged(int arg1){
+     emit logChekingChanged(arg1);
+}
