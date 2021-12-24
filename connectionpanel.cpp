@@ -173,6 +173,7 @@ void ConnectionPanel::connectionButtonChanged(bool enabled, int text)
     switch (text){
         case 0: ui->connectButton->setText("Подключиться"); break;
         case 1: ui->connectButton->setText("Отключиться"); break;
+        case 2: ui->connectButton->setText("Прервать подключение..."); break;
     }
 }
 //Изменение состояния панели вкл/выкл
@@ -222,9 +223,11 @@ void ConnectionPanel::on_updAvblPortsButt_clicked(){
 //ПОДКЛЮЧИТЬСЯ!
 void ConnectionPanel::on_connectButton_clicked(){
     if(ui->connectButton->text() == "Подключиться")
-        emit connectionPushed(true);
+        emit connectionPushed(1);
     else if(ui->connectButton->text() == "Отключиться")
-        emit connectionPushed(false);
+        emit connectionPushed(0);
+    else if(ui->connectButton->text() == "Прервать подключение...")
+        emit connectionPushed(-1);
 }
 
 //Переключение режима TCP - SERIAL

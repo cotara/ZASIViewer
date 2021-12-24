@@ -157,7 +157,7 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
         else{//Процесс  отключения/подключения
             ui->actiondoubleMode->setEnabled(false);
             ui->actiontcp_com->setEnabled(false);
-            m_connectionPanel->connectionButtonChanged(false,2);//Текст не менять выкл
+            m_connectionPanel->connectionButtonChanged(true,2);//Текст не менять выкл
             m_connectionPanel->enablePanel(false);              //панель выкл
         }
     }
@@ -179,19 +179,29 @@ void MainWindow::connectionChanged(int server, int status,const QString &host){
 //Печать сообщения об ошибке в строку статуса и консоль
 //Сигнал из lmd Device
 void MainWindow::connectionFailed( const QString &msg){
+    //Пробуем переподключиться
+    //....
     m_statusBar->setMessageBar(msg);
     m_console->putData(msg.toUtf8());
 }
 
 //Нажата кнопка подключиться/отключиться
-void MainWindow::connectionPushed(bool action){
-    if(action)  {
-        for(LDMDevice* i:devices)
+void MainWindow::connectionPushed(int action){
+    if(action==1)  {
+        for(LDMDevice* i:devices){
                 i->onConnect();
+                i->setReconnection(true);
+        }
     }
-    else {
+    else if(action==0){
         for(LDMDevice* i:devices)
                 i->onDisconnect();
+    }
+    else if(action==-1){
+        for(LDMDevice* i:devices){
+                i->onDisconnect();
+                i->setReconnection(false);
+        }
     }
 }
 //Печатаем пакет модбас

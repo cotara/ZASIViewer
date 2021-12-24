@@ -23,7 +23,7 @@ public:
 private slots:
     void connectionChanged(int numDev, int status,const QString &host);
     void connectionFailed(const QString &msg);
-    void connectionPushed(bool action);
+    void connectionPushed(int action);
     void modbusPacketPrint(int ,const  QString &str);
     void clearConsole();
     void on_actionconsoleOn_toggled(bool arg1);

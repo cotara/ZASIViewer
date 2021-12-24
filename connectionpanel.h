@@ -57,7 +57,7 @@ private:
     const QString red = "QLabel { background-color : red; color : white }";
 
 signals:
-    void connectionPushed(bool action);
+    void connectionPushed(int action);
     void ipAdd_compChanged(int numDev,const QString &ipAdd_comp);
     void port_boudChanged(int numDev,int port_boud);
     void serverChanged(int numDev, int serverAdd);

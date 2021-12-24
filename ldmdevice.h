@@ -44,6 +44,7 @@ public slots:
     int getServer(){return m_server;};
     void setLookerEnabled(bool state){m_looker->setEnabled(state);};
     void setLogProperty(bool state){m_looker->loggingProperty = state;}
+    void setReconnection(bool flag);
 private:
     QVBoxLayout *VLayout;
     QModbusClient *m_ModbusClient=nullptr;
@@ -62,6 +63,7 @@ private:
     QVector <unsigned short> dataToSend;
     bool flag6func=false;
     int errorsCounter=0;
+    bool reconnectinFlag=true;
 
 private slots:
     void onModbusStateChanged(int state);

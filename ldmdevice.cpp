@@ -93,7 +93,10 @@ void LDMDevice::createNewClien(QModbusClient *client, bool type){
         connect(m_ModbusClient, &QModbusClient::stateChanged,this,&LDMDevice::onModbusStateChanged);
         connect(m_ModbusClient, &QModbusClient::errorOccurred, this,[=]{
             emit errorOccured("Устройство " + QString::number(m_server) + " : " + m_ModbusClient->errorString()+"\n");
-            onConnect();//Пробуем переподключиться
+            if(reconnectinFlag){
+                onDisconnect();
+                onConnect();//Пробуем переподключиться
+            }
             m_looker->setEnabled(false);
         });
     }
@@ -127,10 +130,15 @@ void LDMDevice::onConnect(){
 }
 
 void LDMDevice::onDisconnect(){
-    if (m_ModbusClient->state() == QModbusDevice::ConnectedState){
+    if (m_ModbusClient->state() == QModbusDevice::ConnectedState || m_ModbusClient->state() == QModbusDevice::ConnectingState){
         m_ModbusClient->disconnectDevice();
         m_looker->onConnect(false);
     }
+}
+
+void LDMDevice::setReconnection(bool flag)
+{
+    reconnectinFlag=flag;
 }
 //Состояние изменилось
 void LDMDevice::onModbusStateChanged(int state){
