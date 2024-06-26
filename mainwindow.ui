@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
@@ -68,7 +68,7 @@
    </property>
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/res/command-line.svg</normaloff>:/res/command-line.svg</iconset>
+     <normaloff>:/res/command-line.png</normaloff>:/res/command-line.png</iconset>
    </property>
    <property name="text">
     <string>consoleOn</string>
@@ -86,7 +86,7 @@
    </property>
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/res/Rightsidebar.svg</normaloff>:/res/Rightsidebar.svg</iconset>
+     <normaloff>:/res/Rightsidebar.png</normaloff>:/res/Rightsidebar.png</iconset>
    </property>
    <property name="text">
     <string>settingsOn</string>

@@ -12,6 +12,9 @@
         <file>res/double2.png</file>
         <file>res/flash.png</file>
         <file>res/help.png</file>
+        <file>res/command-line.png</file>
+        <file>res/Rightsidebar.png</file>
+        <file>res/table.png</file>
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>
