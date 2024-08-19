@@ -2,11 +2,17 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "connectionpanel.h"
 #include "console.h"
 #include <QHBoxLayout>
 #include "statusbar.h"
-#include "ldmdevice.h"
+#include "redwilldevice.h"
+#include "zasilooker.h"
+#include "serialsettings.h"
+#include <QQueue>
+
+
+
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,33 +27,37 @@ public:
     ~MainWindow();
 
 private slots:
-    void connectionChanged(int numDev, int status,const QString &host);
-    void connectionFailed(const QString &msg);
-    void connectionPushed(int action);
-    void modbusPacketPrint(int ,const  QString &str);
-    void clearConsole();
-    void on_actionconsoleOn_toggled(bool arg1);
-    void on_actionsettingsOn_toggled(bool arg1);
-    void on_actiontcp_com_toggled(bool arg1);
-    void connectNewDevice(LDMDevice* dev);
-    void saveSettings();
+    void createRedwillDevice(ClientType type);
+    void fillDevInfo();
+    void newSettingsOk(QList<ConSettings> &settings);
+    void setMessage(const QString &msg);
+    void communicationFailed(int serv);
+    void connectionChanged(const QString &host,int status);
+    void deviceReceived(int server);
+    void deviceAck(int server);
+    void add6ToQueue(int server, const QVector<unsigned short> & par, int startAdd, int count);
+    void sendTimeout();
 
-    void on_actionHelp_triggered();
+    void on_actionconnect_triggered(bool checked);      //Кнопка коннект
+    void on_actionsettingsOn_triggered();               //Кнопка показать настройки
+    void on_actionconsoleOn_toggled(bool arg1);         //Кнопка показать консоль
+
+    void on_actionlogOn_toggled(bool arg1);
 
 private:
     Ui::MainWindow *ui;
     QHBoxLayout *HLayout,*devicesLayout;
     QVBoxLayout *VLayout;
-
+    QTimer *m_timerSend;
+    SerialSettings *m_serialSetting;
     StatusBar *m_statusBar;
-    QVector <LDMDevice*> devices;
-    ConnectionPanel *m_connectionPanel;
     Console *m_console;
+    devInfo m_devInfo;
+    ConSettings m_conSettings;
+    ZasiLooker *m_looker;
+    RedwillDevice *m_dev = nullptr;
 
-    int currentCountDev=1;
-    int connectedDevices = 0;//Количество устройств, подключенных
-    int connectingDevice = 0;//Количество устройств, находящихся в состоянии подключения/отключения
-    QMap <int, int> connectionState;
+
 
 };
 #endif // MAINWINDOW_H

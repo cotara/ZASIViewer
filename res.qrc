@@ -15,11 +15,82 @@
         <file>res/command-line.png</file>
         <file>res/Rightsidebar.png</file>
         <file>res/table.png</file>
+        <file>res/command-line_2.png</file>
+        <file>res/connect.png</file>
+        <file>res/connect_1.png</file>
+        <file>res/connect_2.png</file>
+        <file>res/double.png</file>
+        <file>res/double1.png</file>
+        <file>res/eth1.png</file>
+        <file>res/eth2_off.png</file>
+        <file>res/ethernet (1).png</file>
+        <file>res/ethernet.png</file>
+        <file>res/excel (1).png</file>
+        <file>res/excel.png</file>
+        <file>res/icon.ico</file>
+        <file>res/Id_110.png</file>
+        <file>res/images.png</file>
+        <file>res/logo.png</file>
+        <file>res/office365.png</file>
+        <file>res/rj45 (1).png</file>
+        <file>res/rj45.png</file>
+        <file>res/search1.png</file>
+        <file>res/serial.png</file>
+        <file>res/serialOff.png</file>
+        <file>res/serialOn.png</file>
+        <file>res/serilaOn.png</file>
+        <file>res/settings3.png</file>
+        <file>res/spark-plug.png</file>
+        <file>res/star.png</file>
+        <file>res/switch.png</file>
+        <file>res/tech_ethernet_icon_156953.png</file>
+        <file>res/vga (1).png</file>
+        <file>res/vga-cable (1).png</file>
+        <file>res/vga-cable.png</file>
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>
         <file>styleGreenButtons.css</file>
         <file>styleWhiteButtons.css</file>
         <file>styleYelowButtons.css</file>
+        <file>styleRedButtons.css</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file>res/Fonts/GranaPadano.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-Black.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-BlackItalic.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-Bold.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-BoldItalic.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-ExtraBold.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-ExtraBoldItalic.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-ExtraLight.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-ExtraLightItalic.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-Italic.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-Light.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-LightItalic.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-Regular.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-SemiBold.ttf</file>
+        <file>res/Fonts/Nunito/Nunito-SemiBoldItalic.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Black.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Bold.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Heavy.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Light.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Medium.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Regular.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Semibold.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Thin.ttf</file>
+        <file>res/Fonts/SF/SFUIDisplay-Ultralight.ttf</file>
+        <file>res/Fonts/SF/SFUIText-Bold.ttf</file>
+        <file>res/Fonts/SF/SFUIText-BoldItalic.ttf</file>
+        <file>res/Fonts/SF/SFUIText-Heavy.ttf</file>
+        <file>res/Fonts/SF/SFUIText-HeavyItalic.ttf</file>
+        <file>res/Fonts/SF/SFUIText-Italic.ttf</file>
+        <file>res/Fonts/SF/SFUIText-Light.ttf</file>
+        <file>res/Fonts/SF/SFUIText-LightItalic.ttf</file>
+        <file>res/Fonts/SF/SFUIText-Medium.ttf</file>
+        <file>res/Fonts/SF/SFUIText-MediumItalic.ttf</file>
+        <file>res/Fonts/SF/SFUIText-Regular.ttf</file>
+        <file>res/Fonts/SF/SFUIText-Semibold.ttf</file>
+        <file>res/Fonts/SF/SFUIText-SemiboldItalic.ttf</file>
     </qresource>
 </RCC>
