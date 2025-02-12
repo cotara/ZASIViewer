@@ -48,13 +48,6 @@
         <file>res/vga-cable (1).png</file>
         <file>res/vga-cable.png</file>
     </qresource>
-    <qresource prefix="/qss">
-        <file>style.css</file>
-        <file>styleGreenButtons.css</file>
-        <file>styleWhiteButtons.css</file>
-        <file>styleYelowButtons.css</file>
-        <file>styleRedButtons.css</file>
-    </qresource>
     <qresource prefix="/fonts">
         <file>res/Fonts/GranaPadano.ttf</file>
         <file>res/Fonts/Nunito/Nunito-Black.ttf</file>

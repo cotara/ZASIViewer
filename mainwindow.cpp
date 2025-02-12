@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
 
     //Таймер отправки
     m_timerSend = new QTimer(this);
-    m_timerSend->setInterval(100);
+    m_timerSend->setInterval(200);
     connect(m_timerSend,&QTimer::timeout,this, &MainWindow::sendTimeout);
 
     addToolBar(Qt::RightToolBarArea, ui->toolBar);//Перемещаем тулбарнаправо
@@ -57,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
 }
 
 MainWindow::~MainWindow(){
-    m_serialSetting->saveSettings();
+    m_serialSetting->saveOneSettings();
     delete ui;
 }
 //*****************************************************************
