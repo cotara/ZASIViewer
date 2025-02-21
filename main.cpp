@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     MainWindow w;
 
     w.setWindowTitle("ASI Viewer");
-    w.setWindowIcon(QIcon(":/res/flash.png"));
+    w.setWindowIcon(QIcon("://res/flash.png"));
     QFontDatabase::addApplicationFont(":/fonts/res/Fonts/Nunito/Nunito-Light.ttf");
     QFontDatabase::addApplicationFont(":/fonts/res/Fonts/GranaPadano.ttf");
     QFontDatabase::addApplicationFont(":/fonts/res/Fonts/SF/SFUIText-Bold.ttf");

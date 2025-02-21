@@ -92,6 +92,7 @@ void MainWindow::fillDevInfo(){
     m_devInfo.count3regs = 17;
     m_devInfo.modbusRegsIn.resize(17);
     m_devInfo.modbusRegsOut.resize(17);
+    m_statusBar->setConText(m_conSettings.type + " on " + m_conSettings.host);
 }
 
 //*****************************************************************
@@ -147,7 +148,7 @@ void MainWindow::connectionChanged(const QString &host,int status){
         case 0:   //Отключено
             str = "Отключено от " + host + "\n";
             m_statusBar->setMessageBar(str);
-            m_statusBar->setStatus(false);
+            m_statusBar->setConStatus(false);
             m_console->putData(str.toUtf8());
             m_timerSend->stop();
             m_looker->switchState(false);
@@ -162,7 +163,7 @@ void MainWindow::connectionChanged(const QString &host,int status){
         case 2:     //Подключено
             str = "Подключено к " + host + "\n";
             m_statusBar->setMessageBar(str);
-            m_statusBar->setStatus(true);
+            m_statusBar->setConStatus(true);
             m_console->putData(str.toUtf8());
             m_timerSend->start();
             ui->actionsettingsOn->setEnabled(false);
@@ -240,5 +241,3 @@ void MainWindow::communicationFailed(int serv){
 void MainWindow::on_actionlogOn_toggled(bool arg1){
     m_looker->setLog(arg1);
 }
-
-

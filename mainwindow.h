@@ -37,7 +37,6 @@ private slots:
     void on_actionconnect_triggered(bool checked);      //Кнопка коннект
     void on_actionsettingsOn_triggered();               //Кнопка показать настройки
     void on_actionconsoleOn_toggled(bool arg1);         //Кнопка показать консоль
-
     void on_actionlogOn_toggled(bool arg1);
 
 private:
@@ -52,8 +51,6 @@ private:
     ConSettings m_conSettings;
     ZasiLooker *m_looker;
     RedwillDevice *m_dev = nullptr;
-
-
 
 };
 #endif // MAINWINDOW_H
