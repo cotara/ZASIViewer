@@ -4,11 +4,11 @@
 #include <QMainWindow>
 #include "console.h"
 #include <QHBoxLayout>
+#include "qelapsedtimer.h"
 #include "statusbar.h"
 #include "redwilldevice.h"
 #include "zasilooker.h"
 #include "serialsettings.h"
-#include <QQueue>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -33,6 +33,7 @@ private slots:
     void deviceAck(int server);
     void add6ToQueue(int server, const QVector<unsigned short> & par, int startAdd, int count);
     void sendTimeout();
+    void freqCalcTimeout();
 
     void on_actionconnect_triggered(bool checked);      //Кнопка коннект
     void on_actionsettingsOn_triggered();               //Кнопка показать настройки
@@ -43,7 +44,7 @@ private:
     Ui::MainWindow *ui;
     QHBoxLayout *HLayout,*devicesLayout;
     QVBoxLayout *VLayout;
-    QTimer *m_timerSend;
+    QTimer *m_timerSend, *m_freqCalcTimer;
     SerialSettings *m_serialSetting;
     StatusBar *m_statusBar;
     Console *m_console;
@@ -51,6 +52,9 @@ private:
     ConSettings m_conSettings;
     ZasiLooker *m_looker;
     RedwillDevice *m_dev = nullptr;
+    QElapsedTimer startTime;
+    int m_period=100;
+    int packetCounter=0;
 
 };
 #endif // MAINWINDOW_H
