@@ -7,7 +7,7 @@
 #include "qelapsedtimer.h"
 #include "statusbar.h"
 #include "redwilldevice.h"
-#include "zasilooker.h"
+#include "lookers/zasilooker.h"
 #include "serialsettings.h"
 
 QT_BEGIN_NAMESPACE

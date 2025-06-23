@@ -23,8 +23,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     m_statusBar->visibleStatus(true);
     m_statusBar->visibleBar(true);
     m_statusBar->setDownloadBarFormat("%v Гц");
-    m_statusBar->setDownloadBarRange(10);
+    m_statusBar->setDownloadBarRange(30);
     m_statusBar->visibleTime(true);
+    m_statusBar->visibleAnimation(true);
 
     //Добавление виджетов
     HLayout->addLayout(VLayout);
@@ -44,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
     fillDevInfo();
 
     //Создаем лукер
-    m_looker = new ZasiLooker(this, m_devInfo.model,m_devInfo.server);
+    m_looker = new ZasiLooker(this,m_conSettings.host, m_devInfo.model,m_devInfo.server);
     connect(m_looker, &ZasiLooker::setParams, this,[=](const QVector<unsigned short> & par, int startAdd, int count){
         add6ToQueue(m_looker->server(),par, startAdd,count);
     });
@@ -64,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
 }
 
 MainWindow::~MainWindow(){
-    m_serialSetting->saveOneSettings();
+    m_serialSetting->saveOneSettings(m_conSettings);
     delete ui;
 }
 
@@ -150,43 +151,42 @@ void MainWindow::on_actionsettingsOn_triggered(){
 }
 
 //*****************************************************************
+//*****************************************************************
 //Состояние соединения изменилоось
 void MainWindow::connectionChanged(const QString &host,int status){
-    QString str;
+    QString str="";
+
+    if(status<0 || status>4) return;
 
     switch(status){
     case 0:   //Отключено
         str = "Отключено от " + host + "\n";
-        m_statusBar->setMessageBar(str);
         m_statusBar->setConStatus(false);
-        m_console->putData(str.toUtf8());
+        m_statusBar->enAnimation(false);
         m_timerSend->stop();
         m_freqCalcTimer->stop();
-        m_looker->switchState(false);
         ui->actionconnect->setChecked(false);
         ui->actionsettingsOn->setEnabled(true);
         break;
     case 1:    //Подключение
         str = "Подключение к " + host + "\n";
-        m_statusBar->setMessageBar(str);
-        m_console->putData(str.toUtf8());
         break;
     case 2:     //Подключено
         str = "Подключено к " + host + "\n";
-        m_statusBar->setMessageBar(str);
         m_statusBar->setConStatus(true);
-        m_console->putData(str.toUtf8());
         m_timerSend->start();
         m_freqCalcTimer->start();
-        ui->actionsettingsOn->setEnabled(false);
         ui->actionconnect->setChecked(true);
+        ui->actionsettingsOn->setEnabled(false);
         break;
     case 3:       //Отключение
         str = "Отключение от " + host + "\n";
-        m_statusBar->setMessageBar(str);
-        m_console->putData(str.toUtf8());
         break;
     }
+
+    m_looker->switchState(static_cast <ConectionState>(status));
+    m_statusBar->setMessageBar(str);
+    m_console->putData(str.toUtf8());
 }
 
 //*****************************************************************
@@ -205,9 +205,9 @@ void MainWindow::add6ToQueue(int server,const QVector<unsigned short> & par, int
 //Отправляем запрос. 6, если он выставлен или 3 в противном случае.
 //Тут надо подумать, если не выставлен 0, стоит ли вообще отправлять что-то или надо ждать?
 void MainWindow::sendTimeout(){
-    if(m_devInfo.func != 6){                    //Если не установлена 6 и предыдущее обработано, то выставляем опять 3
-        m_devInfo.func = 3;
-    }
+    if(m_dev->isBusy())
+        return;
+
     m_dev->modbusAct(&m_devInfo);
 }
 
@@ -223,9 +223,8 @@ void MainWindow::deviceReceived(int server){
     if(server == m_devInfo.server){
         QString str = "Data received from " + m_devInfo.typeStr + QString::number(m_devInfo.model) + " (SERV:" + QString::number(m_devInfo.server) + ")";
         m_statusBar->setMessageBar(str);
-
+        m_statusBar->enAnimation(true);
         m_looker->setData(m_devInfo.modbusRegsIn);
-        m_looker->switchState(true);
         packetCounter++;
     }
 }
@@ -233,9 +232,9 @@ void MainWindow::deviceReceived(int server){
 //*****************************************************************
 //Получено подтверждение от 6 и 16
 void MainWindow::deviceAck(int server){
-    if(server == m_devInfo.server){
-        m_looker->switchState(true);
-    }
+    if(server == m_devInfo.server)
+        m_looker->switchState(ConectionState::CONNECTED);
+
 }
 
 //*****************************************************************
@@ -249,9 +248,10 @@ void MainWindow::setMessage(const QString &msg){
 //Ошибка в логике обмена данными (высокий уровень)
 void MainWindow::communicationFailed(int serv){
     if(m_looker->server() == serv){
-        m_looker->switchState(false);
+        m_looker->switchState(ConectionState::UNCONNECTED);
         m_looker->setEnabled(false);
         m_statusBar->incReSent();
+        m_statusBar->enAnimation(false);
     }
 }
 
